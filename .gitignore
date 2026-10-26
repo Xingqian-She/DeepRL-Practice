@@ -205,6 +205,25 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Per-project experiment outputs (including tools/runs smoke checks)
+**/runs/
+
+# LaTeX intermediate files; source and selected PDFs can be committed
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+
 # Ruff stuff:
 .ruff_cache/
 

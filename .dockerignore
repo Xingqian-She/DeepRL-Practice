@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+.env
+.venv
+**/__pycache__
+**/runs
+**/.pytest_cache
+**/.ruff_cache
+**/*.aux
+**/*.log
+**/*.out
+**/*.synctex.gz

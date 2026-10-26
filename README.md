@@ -1,2 +1,194 @@
 # DeepRL-Practice
-Code implementations of classic Deep Reinforcement Learning algorithms. | 深度强化学习算法代码实践与学习笔记。
+
+深度强化学习算法代码实践与学习笔记。采用 **共享 Docker 环境＋相对独立的实验子项目**：统一环境和实验产物约定，各项目自行组织代码、参数和数学笔记。
+
+当前提供 CartPole 随机策略环境验证，尚未实现训练算法。随机策略的回报仅用于检查运行链路。
+
+## 环境与前提
+
+- Windows Docker Desktop，启用 **WSL2 后端、Linux 容器和 Ubuntu 的 WSL integration**。
+- 下文命令从 WSL 终端执行，仓库位于 `/mnt/d/py/DeepRL-Practice`。
+- Python、Gymnasium Classic Control、CUDA 版 PyTorch、TensorBoard 和视频依赖都安装在容器内，宿主机无需安装这些 Python 包。
+- GPU 需要支持 WSL 的 NVIDIA Windows 驱动；默认运行和录制不需要 GPU。
+- 弹窗使用 WSLg。LaTeX 是当前例外：源码放各项目 `theory/`，使用本机已有 LaTeX 环境编译，镜像不包含 TeX。
+
+```bash
+cd /mnt/d/py/DeepRL-Practice
+docker version
+docker compose version
+```
+
+仓库先保留在 D 盘；以后大量文件读写确有性能瓶颈时，再考虑迁入 WSL 文件系统。
+
+## 构建与运行
+
+以下命令在仓库根目录执行。首次构建会下载较大的 CUDA/PyTorch 依赖。
+
+```bash
+docker compose build runner
+docker compose run --rm runner python -m pip check
+docker compose run --rm runner python -c 'import gymnasium, torch, tensorboard; print(gymnasium.__version__, torch.__version__, tensorboard.__version__)'
+
+# 默认：不渲染、3 回合、seed=42，不申请 GPU、不挂载 WSLg
+docker compose run --rm runner python tools/smoke_test.py
+
+# 不弹窗，每回合输出一个 MP4
+docker compose run --rm runner python tools/smoke_test.py --mode video
+
+# output-dir 是父目录，每次在其中创建唯一运行目录
+docker compose run --rm runner python tools/smoke_test.py \
+  --mode none --episodes 5 --seed 7 --output-dir tools/runs
+```
+
+默认使用官方 PyPI。若下载缓慢，可选用镜像源构建，锁定版本保持一致：
+
+```bash
+docker compose build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple runner
+```
+
+默认输出保存在 `tools/runs/`，容器退出后仍保留在宿主机。脚本仅使用随机动作，不保存模型。指标 `episode/return` 和 `episode/length` 的横轴为累计环境步数；遇到 `terminated` 或 `truncated` 均结束当前回合。
+
+### GPU
+
+GPU 配置只作用于 `runner`。以下检查明确要求 CUDA，不会静默回退 CPU：
+
+```bash
+docker compose -f compose.yaml -f compose.gpu.yaml run --rm runner \
+  python -c 'import torch; assert torch.cuda.is_available(), "CUDA unavailable"; x=torch.ones(3, device="cuda"); print(torch.cuda.get_device_name(0), x.sum().item())'
+```
+
+随机策略没有神经网络，动作采样仍在 CPU 执行；CUDA 张量检查单独验证 GPU 链路。未来训练脚本可自行提供 `--device` 参数。
+
+### WSLg 弹窗
+
+在 **WSL 终端** 检查显示变量和接口，再启动窗口：
+
+```bash
+echo "$DISPLAY / $WAYLAND_DISPLAY / $XDG_RUNTIME_DIR"
+ls -ld /tmp/.X11-unix /mnt/wslg "$XDG_RUNTIME_DIR"
+docker compose -f compose.yaml -f compose.gui.yaml run --rm runner \
+  python tools/smoke_test.py --mode human
+```
+
+窗口在 Windows 桌面显示，运行结束后关闭。不要在 PowerShell 直接执行 GUI 命令。显示变量缺失时 Compose 明确报错；接口目录缺失也会报错，不自动创建空目录。
+
+CartPole 使用 SDL/X11，GUI 配置强制选择 X11 并挂载 WSLg 接口。当前 CartPole 验证将音频驱动设为 `dummy`，避免探测不存在的声卡；需要声音的游戏应另行配置音频。其他游戏的 OpenGL 加速可能需要额外设置，须独立验证；CUDA 运算成功并不代表 OpenGL 已配置好。
+
+GPU 与 GUI 可组合：
+
+```bash
+docker compose -f compose.yaml -f compose.gpu.yaml -f compose.gui.yaml run --rm runner \
+  python tools/smoke_test.py --mode human
+```
+
+### TensorBoard
+
+```bash
+docker compose --profile monitoring up -d tensorboard
+docker compose logs tensorboard
+```
+
+在 Windows 浏览器打开 [http://localhost:6006](http://localhost:6006)，查看 Scalars。服务只读挂载仓库，递归发现各项目事件文件，各次运行分别显示。没有数据时先执行一次验证脚本。
+
+```bash
+# 停止本项目服务；不会删除宿主机输出
+docker compose --profile monitoring down
+```
+
+## 子项目组织
+
+```text
+DeepRL-Practice/
+├── Dockerfile
+├── compose.yaml                  # 默认环境＋按需启动的 TensorBoard
+├── compose.gpu.yaml              # 可选 NVIDIA GPU
+├── compose.gui.yaml              # 可选 WSLg 显示接口
+├── requirements.in               # 直接依赖
+├── requirements.lock             # Linux / Python 3.11 完整版本锁
+├── tools/
+│   ├── smoke_test.py
+│   └── runs/                     # 自动生成，不提交
+└── <游戏名>-<算法名>/             # 实际学习时再创建
+    ├── README.md
+    ├── train.py                  # 推荐命名，非强制接口
+    ├── evaluate.py
+    ├── ...                       # 内部结构自由组织
+    ├── theory/                   # 可选：LaTeX、推导、参考资料
+    └── runs/                     # 自动生成，不提交
+```
+
+- 目录使用小写名称，如 `cartpole-dqn`；README 和运行记录写准确的环境 ID，如 `CartPole-v1`。
+- 各项目从自己的目录直接运行，不导入其他子项目，也不依赖根目录修改 `PYTHONPATH`。不建立公共算法框架。
+- 简单项目可以只有一个脚本；复杂项目自行拆分网络、算法、回放池和配置。
+- 首次学习算法时可在 `theory/` 推导，后续项目直接链接已有推导。LaTeX 中间文件忽略，源码和精选 PDF 可提交。
+- 项目 README 至少说明目标、环境 ID、运行命令、重要参数、结果和参考资料；未验证的结果标明待验证。
+
+### 新增项目
+
+后续开始学习 DQN 时自行创建目录并编写脚本；首轮不创建空算法项目：
+
+```bash
+mkdir -p cartpole-dqn
+# 在 cartpole-dqn 内编写 README.md、train.py、evaluate.py 等
+
+# 脚本创建后，从该项目目录运行；源码修改无需重建镜像
+docker compose run --rm -w /workspace/cartpole-dqn runner python train.py
+docker compose run --rm -w /workspace/cartpole-dqn runner python evaluate.py
+
+# 交互式开发
+docker compose run --rm -w /workspace/cartpole-dqn runner bash
+```
+
+这些入口由项目自行实现。建议训练默认不渲染，单独加载模型评估时选择弹窗或录制。需要 GPU 或弹窗时，叠加相应 `-f` 配置。
+
+### 实验产物
+
+各项目在内部保存独立运行目录：
+
+```text
+runs/<UTC时间戳-seed-唯一后缀>/
+├── metadata.json                 # 参数、环境 ID、依赖、设备、Git 状态
+├── tensorboard/
+├── checkpoints/                  # 有模型时才生成
+└── videos/                       # 有录制时才生成
+```
+
+验证脚本遵循该约定，仅创建需要的文件；元数据还记录每回合结果、完成状态和失败信息。Git 不可读取时记录 `null`，不假定工作区干净。设置种子有助于重复检查，但不保证未来 GPU 训练跨硬件完全一致。
+
+所有 `runs/` 均被 Git 和 Docker 构建上下文忽略。精选结果可另存项目 `results/` 并明确提交。共享镜像不包含源码或实验产物，它们在运行时挂载。
+
+## 更新依赖
+
+共享环境首轮只包含 Classic Control，不预装 Box2D、Atari、MuJoCo。新增依赖统一修改 `requirements.in`，重新生成锁并构建；不要依赖给运行中的容器临时 `pip install` 来维护环境。
+
+TensorBoard 2.20 的启动入口仍使用 `pkg_resources`，因此直接依赖中固定了兼容的 `setuptools==80.9.0`。镜像构建会执行 `pip check` 和 `tensorboard --version`，运行服务后还需检查页面是否可访问。
+
+以下命令用于主动更新依赖，会覆盖锁文件：
+
+```bash
+docker run --rm -v "$PWD:/workspace" -w /workspace python:3.11.14-slim-bookworm \
+  sh -c 'pip install --no-cache-dir uv==0.9.5 && uv pip compile requirements.in --output-file requirements.lock --python-version 3.11 --python-platform x86_64-unknown-linux-gnu'
+
+docker compose build runner
+docker compose run --rm runner python -m pip check
+docker compose run --rm runner python tools/smoke_test.py
+docker compose run --rm runner python tools/smoke_test.py --mode video
+```
+
+构建使用 BuildKit 的 uv 下载缓存。若仅小幅调整依赖、Python 和基础系统版本保持不变，也可以复用本机已有的本项目镜像，避免重新下载已安装的 CUDA 库：
+
+```bash
+docker compose build \
+  --build-arg BASE_IMAGE=deeprl-practice:py311-cu128 \
+  --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple runner
+```
+
+首次构建和升级 Python／基础系统时使用默认基础镜像，不传 `BASE_IMAGE`。
+
+锁针对 Linux x86_64 / Python 3.11；PyTorch 2.9.1 的 PyPI Linux wheel 带有 CUDA 12.8 支持（安装版本标识为 `2.9.1`，运行时可显示 `2.9.1+cu128`）。镜像内安装 CUDA 运行库，宿主机使用 NVIDIA Windows 驱动。更新 PyTorch/CUDA 后须重新做 GPU 检查。系统库在 Dockerfile 维护，基础镜像固定版本标签；字节级复现还需要固定镜像 digest 和系统软件源快照。
+
+## 验收
+
+分别验证构建与依赖、无窗口运行、可解码视频、多个 run 的 TensorBoard 指标、真实 GPU 张量运算、桌面窗口，以及退出后输出持久化。各项实际结果见 [VALIDATION.md](VALIDATION.md)；配置文件存在不代表链路已验证。
+
+参考：[Docker WSL2](https://docs.docker.com/desktop/features/wsl/)、[Compose GPU](https://docs.docker.com/compose/how-tos/gpu-support/)、[WSLg 容器](https://github.com/microsoft/wslg/blob/main/samples/container/Containers.md)、[Gymnasium 录制](https://gymnasium.farama.org/introduction/record_agent/)。

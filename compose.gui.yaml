@@ -1,0 +1,30 @@
+# Run from a WSL terminal with WSLg, not directly from PowerShell.
+# CartPole uses SDL/X11. Other environments may require additional graphics setup.
+services:
+  runner:
+    environment:
+      DISPLAY: ${DISPLAY:?Run GUI commands from a WSL terminal with WSLg enabled}
+      WAYLAND_DISPLAY: ${WAYLAND_DISPLAY:?WSLg WAYLAND_DISPLAY is missing}
+      XDG_RUNTIME_DIR: ${XDG_RUNTIME_DIR:?WSLg XDG_RUNTIME_DIR is missing}
+      SDL_VIDEODRIVER: x11
+      # CartPole has no audio; avoid probing host sound devices from the container.
+      SDL_AUDIODRIVER: dummy
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /mnt/wslg
+        target: /mnt/wslg
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${XDG_RUNTIME_DIR:?WSLg XDG_RUNTIME_DIR is missing}
+        target: ${XDG_RUNTIME_DIR:?WSLg XDG_RUNTIME_DIR is missing}
+        read_only: true
+        bind:
+          create_host_path: false

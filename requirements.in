@@ -1,0 +1,8 @@
+# Linux x86_64 / Python 3.11. The PyPI Linux wheel includes CUDA 12.8 support.
+torch==2.9.1
+gymnasium[classic-control]==1.2.2
+tensorboard==2.20.0
+# TensorBoard 2.20's CLI still imports pkg_resources (removed in setuptools 82).
+setuptools==80.9.0
+moviepy==2.2.1
+imageio-ffmpeg==0.6.0
