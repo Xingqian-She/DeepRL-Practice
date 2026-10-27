@@ -2,7 +2,7 @@
 
 深度强化学习算法代码实践与学习笔记。采用 **共享 Docker 环境＋相对独立的实验子项目**：统一环境和实验产物约定，各项目自行组织代码、参数和数学笔记。
 
-当前提供 CartPole 随机策略环境验证，尚未实现训练算法。随机策略的回报仅用于检查运行链路。
+当前提供 CartPole 随机策略环境验证，以及 [CartPole DQN 训练实验](cartpole-dqn/README.md)。随机策略的回报仅用于检查运行链路；DQN 的运行方式、结果与当前限制见子项目说明。
 
 ## 环境与前提
 
@@ -171,7 +171,7 @@ DeepRL-Practice/
 
 ### 新增项目
 
-后续开始学习 DQN 时自行创建目录并编写脚本；首轮不创建空算法项目：
+已有的 CartPole DQN 实验见[子项目说明](cartpole-dqn/README.md)。新增子项目时可参考以下组织方式；命令中的 `train.py`、`evaluate.py` 是示例入口，需由对应项目自行实现：
 
 ```bash
 mkdir -p cartpole-dqn
