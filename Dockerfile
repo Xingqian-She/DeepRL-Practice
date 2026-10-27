@@ -9,7 +9,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYGAME_HIDE_SUPPORT_PROMPT=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates git ffmpeg libgl1 libegl1 libglib2.0-0 \
+    build-essential \
+    ca-certificates git ffmpeg libgl1 libegl1 libglib2.0-0 tk8.6 \
     libx11-6 libxext6 libxrender1 libxkbcommon0 libwayland-client0 \
     && rm -rf /var/lib/apt/lists/*
 

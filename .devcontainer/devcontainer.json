@@ -1,0 +1,44 @@
+{
+  "name": "DeepRL (GPU + WSLg)",
+  "image": "deeprl-practice:py311-cu128",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "init": true,
+  "overrideCommand": true,
+  "shutdownAction": "stopContainer",
+  "remoteUser": "root",
+  "runArgs": ["--gpus=all", "--tmpfs=/run/deeprl:rw,mode=0700"],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "WAYLAND_DISPLAY": "${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY}",
+    "XDG_RUNTIME_DIR": "/run/deeprl",
+    "SDL_VIDEODRIVER": "x11",
+    "SDL_AUDIODRIVER": "dummy"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,readonly",
+    "source=/mnt/wslg,target=/mnt/wslg,type=bind,readonly",
+    "source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind,readonly"
+  ],
+  "initializeCommand": [
+    "bash",
+    "-lc",
+    "if [ -z '${localEnv:DISPLAY}' ] || [ -z '${localEnv:WAYLAND_DISPLAY}' ] || [ -z '${localEnv:XDG_RUNTIME_DIR}' ]; then echo 'Missing WSLg variables. Enable dev.containers.executeInWSL and select Ubuntu-22.04 in VS Code User Settings; see README.' >&2; exit 1; fi; docker image inspect --format '{{.Id}}' deeprl-practice:py311-cu128"
+  ],
+  "postCreateCommand": ["/usr/local/bin/python", "-m", "pip", "check"],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "python.analysis.autoImportCompletions": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
