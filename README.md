@@ -20,6 +20,52 @@ docker compose version
 
 仓库先保留在 D 盘；以后大量文件读写确有性能瓶颈时，再考虑迁入 WSL 文件系统。
 
+## VS Code 容器开发
+
+项目提供 `.devcontainer/devcontainer.json`。VS Code 的界面仍在 Windows 上，Python 扩展、Pylance、调试器和终端则运行在开发容器中，使用容器的 `/usr/local/bin/python`。这样补全、导入检查和代码运行使用同一套已安装依赖，宿主机无需再安装 PyTorch 等 Python 库。[VS Code 官方说明](https://code.visualstudio.com/docs/devcontainers/create-dev-container)
+
+此开发配置针对当前 Windows + NVIDIA GPU + WSLg 环境，复用已构建的 `deeprl-practice:py311-cu128` 镜像，不会自动重新下载训练依赖。首次在新机器使用时，先按下一节构建镜像。
+
+WSLg 显示接口只读挂载；编辑器使用独立、可写的容器运行目录 `/run/deeprl`，避免 VS Code 的进程通信 socket 写入只读的宿主机目录。
+
+1. Windows VS Code 安装 **WSL** 和 **Dev Containers** 扩展；本机已安装。
+2. 在 **Windows VS Code 用户设置（JSON）**中补充以下两项，保留已有的其他设置；本机已配置。这是应用级设置，不能放到仓库的 `.vscode/settings.json`。仓库位于 D 盘时，这两项确保扩展仍在 WSL 中执行启动命令并读取 WSLg 变量。
+
+   ```json
+   {
+     "dev.containers.executeInWSL": true,
+     "dev.containers.executeInWSLDistro": "Ubuntu-22.04"
+   }
+   ```
+
+3. 从 **Windows PowerShell** 打开仓库对应的 WSL 窗口：
+
+   ```powershell
+   code --new-window --remote wsl+Ubuntu-22.04 /mnt/d/py/DeepRL-Practice
+   ```
+
+4. 等待首次 WSL 服务器下载和连接完成。然后按 `Ctrl+Shift+P`，执行 **Dev Containers: Reopen in Container**（在容器中重新打开）。首次连接容器还会下载容器内 VS Code Server 和扩展。
+5. 等左下角显示 **Dev Container: DeepRL (GPU + WSLg)**，再打开 Python 文件。容器内会自动安装 Python、Pylance 和 Python Debugger 扩展。
+
+请打开整个仓库根目录，以便发现开发容器配置；子项目仍然可以自行组织代码。仅显示 `WSL: Ubuntu-22.04` 时，编辑器尚未连接到 Docker 容器。此配置依赖 WSLg 环境变量，不要直接从 Windows 本地文件夹执行“在容器中重新打开”；先按上述步骤进入 WSL 窗口。
+
+在 VS Code 的新终端验证：
+
+```bash
+which python
+python -c 'import sys, torch, gymnasium; print(sys.executable); print(torch.__version__, gymnasium.__version__); print("CUDA:", torch.cuda.is_available())'
+python tools/smoke_test.py --mode human
+```
+
+预期解释器为 `/usr/local/bin/python`，CUDA 为 `True`，弹窗显示正常。在容器终端里直接执行 `python`，无需再套 `docker compose run`。开发容器未安装 Docker CLI 或挂载 Docker socket；构建镜像、管理 TensorBoard 等 Docker 命令仍在宿主机 WSL 终端执行。
+
+- **断点调试：** 打开目标 `.py`，设置断点，按 F5，选择“Python: 调试当前文件（容器内）”。工作目录设为该文件的目录，适合独立子项目；也可选择专门的 CartPole 弹窗验证配置。
+- **导入仍标红：** 确认已连接 Dev Container，等待 Python/Pylance 扩展安装完成，再执行 **Python: Select Interpreter**，选择 `/usr/local/bin/python`。必要时执行 **Python: Restart Language Server**。
+- **更新依赖：** 修改根目录依赖、生成锁并重建共享镜像后，执行 **Dev Containers: Rebuild Container**。仅修改 Python 源码无需重建。
+- **结束开发：** 关闭该 VS Code 远程窗口会停止开发容器，宿主机源码和 `runs/` 输出仍保留；独立的 TensorBoard 服务不受影响。
+
+LaTeX 继续按约定在本机编译。编辑推导时可另开一个普通 Windows VS Code 窗口使用本机 LaTeX Workshop；开发容器不安装 TeX。
+
 ## 构建与运行
 
 以下命令在仓库根目录执行。首次构建会下载较大的 CUDA/PyTorch 依赖。

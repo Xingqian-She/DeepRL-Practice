@@ -72,3 +72,14 @@ tools/runs/20261026T120917536340Z-seed42-51cd41ad  # GPU+GUI
 ```
 
 首次 GUI 运行有音频设备探测提示。CartPole 无音频需求，故 GUI 配置增加 `SDL_AUDIODRIVER=dummy`；第二组实测已无 ALSA 和音频运行目录所有权提示。仍可出现上游 `pkg_resources` 弃用提示，不影响已验证的窗口运行。
+
+## VS Code 开发容器
+
+- 增加 `.devcontainer/devcontainer.json`，复用同一训练镜像，工作目录为 `/workspace`；自动配置 Python、Pylance、Python Debugger 和 `/usr/local/bin/python`。
+- 增加当前 Python 文件和 CartPole 弹窗的 F5 调试配置；当前文件的工作目录为其所在目录。
+- 使用已安装扩展自带的 Dev Containers CLI 0.89.0，在 Ubuntu WSL 中真实启动配置，结果为 `outcome=success`，`postCreateCommand` 的 `pip check` 通过。
+- 在该验收容器中实测解释器路径正确，PyTorch、Gymnasium、TensorBoard 可导入；CUDA 可见，GPU 张量求和为 3.0；human 模式完成 3 回合，回报为 `30,93,44`，元数据状态为 `completed`。
+- 首次 VS Code 界面连接发现 D 盘目录被按 Windows 路径启动，导致缺失 WSLg 变量。已备份原 Windows VS Code 用户设置，并仅新增 `dev.containers.executeInWSL=true`、`dev.containers.executeInWSLDistro=Ubuntu-22.04`，让界面采用已验证的 WSL 执行路径。
+- 修正启动设置后，VS Code 界面已连接至 `DeepRL (GPU + WSLg)`，`postCreateCommand` 完成；实际界面容器中解释器为 `/usr/local/bin/python`，核心库均可导入，CUDA 为 True。Python、Pylance、Python Debugger 均已安装，用户截图确认 F5 使用容器内 Python Debugger 启动了脚本。
+- 收尾日志发现 VS Code Agent IPC 试图写入只读的宿主机运行目录。配置已增加权限 0700 的私有 tmpfs `/run/deeprl`，Wayland 使用宿主机 socket 的绝对路径。新版配置再次通过 CLI 启动、目录权限及 Unix socket 创建/删除检查，并完成 1 回合 human 模式。
+- 私有运行目录修正后，用户已执行 Rebuild Container 并重新连接。实际界面容器中的 `/run/deeprl` 可创建和删除 Unix socket；VS Code 已在其中建立 IPC/Git socket，新日志中无 EROFS 或 Agent Host 启动失败。解释器与 Machine Settings 均为 `/usr/local/bin/python`，CUDA 为 True；Python、Pylance、Python Debugger 安装成功。Pylance 日志确认使用 Python 3.11.14、完成索引并以容器解释器执行路径解析。
