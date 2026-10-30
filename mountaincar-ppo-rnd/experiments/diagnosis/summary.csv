@@ -1,0 +1,17 @@
+experiment,seed,device,architecture,normalize_policy_input,ext_reward_scale,ext_coef,int_coef,steps,episodes,successes,first_success_step,recent50_success,eval20_step,eval20_argmax_success,eval20_sample_success,holdout100_argmax_success,holdout100_sample_success,holdout100_argmax_return
+compiled-gpu-smoke,0,cuda,residual,True,0.01,2.0,1.0,1024,4,0,,0.0,,,,,,
+mlp-lr4e-5-s0,0,cpu,mlp,False,1,2.0,1.0,102400,512,0,,0.0,102400,0.0,0.0,,,
+mlp-raw-reward001-s0,0,cpu,mlp,False,0.01,2.0,1.0,204800,1024,0,,0.0,204800,0.0,0.0,,,
+mlp-scaled-reward001-s0,0,cpu,mlp,True,0.01,2.0,1.0,204800,1384,1159,23188,1.0,204800,1.0,1.0,,,
+mlp-scaled-reward001-s1,1,cpu,mlp,True,0.01,2.0,1.0,499712,3688,3554,17492,1.0,499712,1.0,1.0,1.0,1.0,-128.49
+mlp-scaled-reward1-s0,0,cpu,mlp,True,1.0,2.0,1.0,204800,1024,0,,0.0,204800,0.0,0.0,,,
+residual-ext0-s0,0,cpu,residual,False,1,0.0,1.0,204800,1024,0,,0.0,204800,0.0,0.0,,,
+residual-int100-s0,0,cpu,residual,False,1,2.0,100.0,102400,512,0,,0.0,102400,0.0,0.0,,,
+residual-lr4e-5-s0,0,cpu,residual,False,1,2.0,1.0,51200,256,0,,0.0,51200,0.0,0.0,,,
+residual-raw-reward001-s0,0,cpu,residual,False,0.01,2.0,1.0,102400,548,170,50336,0.78,102400,0.7,0.9,0.74,0.86,-142.72
+residual-scaled-int0-s0,0,cpu,residual,True,1.0,2.0,0.0,204800,1479,1217,32640,1.0,204800,1.0,1.0,1.0,0.99,-104.22
+residual-scaled-reward001-gpu-s0,0,cuda,residual,True,0.01,2.0,1.0,51200,320,273,7176,1.0,51200,1.0,1.0,1.0,1.0,-129.73
+residual-scaled-reward001-s0,0,cpu,residual,True,0.01,2.0,1.0,204800,1442,1350,8680,1.0,204800,1.0,0.95,1.0,1.0,-131.14
+residual-scaled-reward001-s1,1,cpu,residual,True,0.01,2.0,1.0,499712,4057,3972,5480,1.0,499712,1.0,1.0,1.0,0.98,-115.41
+residual-scaled-reward001-s2,2,cpu,residual,True,0.01,2.0,1.0,499712,3604,3463,11120,0.96,499712,1.0,1.0,1.0,1.0,-125.55
+residual-scaled-reward1-s0,0,cpu,residual,True,1.0,2.0,1.0,102400,659,453,28772,0.98,102400,1.0,1.0,0.99,1.0,-113.74

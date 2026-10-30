@@ -207,6 +207,7 @@ tempCodeRunnerFile.py
 
 # Per-project experiment outputs (including tools/runs smoke checks)
 **/runs/
+mountaincar-ppo-rnd/experiments/diagnosis/*/
 
 # LaTeX intermediate files; source and selected PDFs can be committed
 *.aux
