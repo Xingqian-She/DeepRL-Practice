@@ -1,0 +1,310 @@
+{
+  "evaluation": {
+    "seed": 10000,
+    "episodes": 500,
+    "batch_size": 128,
+    "greedy": true,
+    "device": "cpu"
+  },
+  "versions": {
+    "python": "3.11.13",
+    "torch": "2.9.0+cu128",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.0"
+  },
+  "runs": {
+    "baseline-seed0": {
+      "path": "D:\\py\\DeepRL-Practice\\mountaincar-dqn-count\\SimHash\\runs\\baseline-seed0",
+      "checkpoint_sha256": "d85423a7d095d5b13aa7650357fe4878a2b70fb09e3cc98b751b6fc0eca0579d",
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "evaluation": {
+        "episodes": 500,
+        "successes": 500,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -155.052,
+        "success_mean_length": 155.052,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -192.0,
+          "p25": -179.0,
+          "median": -155.0,
+          "p75": -152.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 563,
+        "first_success_step": 20791.0,
+        "last50_success_rate": 0.98,
+        "last50_mean_return": -157.1,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      }
+    },
+    "simhash-seed0": {
+      "path": "D:\\py\\DeepRL-Practice\\mountaincar-dqn-count\\SimHash\\runs\\simhash-seed0",
+      "checkpoint_sha256": "0a4fcb1c50dc838373b5d12bb8a7a5040e7e455734fe4907d3c6d71e83704d20",
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "evaluation": {
+        "episodes": 500,
+        "successes": 359,
+        "failures": 141,
+        "success_rate": 0.718,
+        "mean_return_ext": -137.592,
+        "success_mean_length": 113.08077994428969,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.4636409878730774,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.36501075507055786,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -114.0,
+          "p75": -112.0,
+          "max": -110.0
+        }
+      },
+      "training": {
+        "complete_episodes": 562,
+        "first_success_step": 25397.0,
+        "last50_success_rate": 0.96,
+        "last50_mean_return": -145.94,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0033316225496979744,
+        "last50_weighted_bonus_per_step": 0.002051387291210925
+      }
+    },
+    "simhash-seed0-appendconstant": {
+      "path": "D:\\py\\DeepRL-Practice\\mountaincar-dqn-count\\SimHash\\runs\\simhash-seed0-appendconstant",
+      "checkpoint_sha256": "122d6c7d122bef85396eacc9d7039beffa51b48b701a55346de0c963fe78c541",
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "evaluation": {
+        "episodes": 500,
+        "successes": 498,
+        "failures": 2,
+        "success_rate": 0.996,
+        "mean_return_ext": -135.47,
+        "success_mean_length": 135.210843373494,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5238605737686157,
+          -0.5232130289077759
+        ],
+        "failure_mean_max_position": -0.5232747197151184,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -159.0,
+          "median": -153.0,
+          "p75": -93.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 620,
+        "first_success_step": 20785.0,
+        "last50_success_rate": 1.0,
+        "last50_mean_return": -142.48,
+        "final_unique_buckets": 165,
+        "mean_weighted_bonus_per_step": 0.0058374122111682645,
+        "last50_weighted_bonus_per_step": 0.0032635838172515516
+      }
+    }
+  },
+  "paired": {
+    "baseline-seed0 vs simhash-seed0": {
+      "both_success": 359,
+      "left_only_success": 141,
+      "right_only_success": 0,
+      "mean_return_difference_left_minus_right": -17.46,
+      "both_success_mean_length_left": 166.16713091922006,
+      "both_success_mean_length_right": 113.08077994428969
+    },
+    "baseline-seed0 vs simhash-seed0-appendconstant": {
+      "both_success": 498,
+      "left_only_success": 2,
+      "right_only_success": 0,
+      "mean_return_difference_left_minus_right": -19.582,
+      "both_success_mean_length_left": 154.98393574297188,
+      "both_success_mean_length_right": 135.210843373494
+    },
+    "simhash-seed0 vs simhash-seed0-appendconstant": {
+      "both_success": 357,
+      "left_only_success": 2,
+      "right_only_success": 141,
+      "mean_return_difference_left_minus_right": -2.122,
+      "both_success_mean_length_left": 113.0812324929972,
+      "both_success_mean_length_right": 153.83473389355743
+    }
+  },
+  "hash_grid_unique_codes": {
+    "False": 64,
+    "True": 201
+  },
+  "example_trajectories": {
+    "baseline-seed0/seed0": {
+      "length": 154,
+      "success": true,
+      "initial_position": -0.47260767221450806,
+      "min_position": -1.1134943962097168,
+      "max_position": 0.5198771357536316,
+      "action_counts": [
+        90,
+        19,
+        45
+      ]
+    },
+    "baseline-seed0/seed10001": {
+      "length": 155,
+      "success": true,
+      "initial_position": -0.4570387005805969,
+      "min_position": -1.1352425813674927,
+      "max_position": 0.5170777440071106,
+      "action_counts": [
+        90,
+        21,
+        44
+      ]
+    },
+    "baseline-seed0/seed10056": {
+      "length": 152,
+      "success": true,
+      "initial_position": -0.5232130289077759,
+      "min_position": -1.0811333656311035,
+      "max_position": 0.5164978504180908,
+      "action_counts": [
+        87,
+        15,
+        50
+      ]
+    },
+    "simhash-seed0/seed0": {
+      "length": 116,
+      "success": true,
+      "initial_position": -0.47260767221450806,
+      "min_position": -1.0588401556015015,
+      "max_position": 0.525148332118988,
+      "action_counts": [
+        31,
+        3,
+        82
+      ]
+    },
+    "simhash-seed0/seed10001": {
+      "length": 200,
+      "success": false,
+      "initial_position": -0.4570387005805969,
+      "min_position": -0.4570387005805969,
+      "max_position": -0.36241960525512695,
+      "action_counts": [
+        0,
+        5,
+        195
+      ]
+    },
+    "simhash-seed0/seed10056": {
+      "length": 113,
+      "success": true,
+      "initial_position": -0.5232130289077759,
+      "min_position": -1.1244142055511475,
+      "max_position": 0.530929446220398,
+      "action_counts": [
+        32,
+        8,
+        73
+      ]
+    },
+    "simhash-seed0-appendconstant/seed0": {
+      "length": 157,
+      "success": true,
+      "initial_position": -0.47260767221450806,
+      "min_position": -1.2000000476837158,
+      "max_position": 0.5296627879142761,
+      "action_counts": [
+        95,
+        31,
+        31
+      ]
+    },
+    "simhash-seed0-appendconstant/seed10001": {
+      "length": 94,
+      "success": true,
+      "initial_position": -0.4570387005805969,
+      "min_position": -0.8858826756477356,
+      "max_position": 0.5048544406890869,
+      "action_counts": [
+        40,
+        0,
+        54
+      ]
+    },
+    "simhash-seed0-appendconstant/seed10056": {
+      "length": 200,
+      "success": false,
+      "initial_position": -0.5232130289077759,
+      "min_position": -0.5239848494529724,
+      "max_position": -0.5232126712799072,
+      "action_counts": [
+        0,
+        200,
+        0
+      ]
+    }
+  }
+}
