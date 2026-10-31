@@ -1,0 +1,4 @@
+variant,training_runs,success_rate_valid_runs,success_rate_mean,success_rate_sd,success_rate_min,success_rate_max,mean_return_ext_valid_runs,mean_return_ext_mean,mean_return_ext_sd,mean_return_ext_min,mean_return_ext_max,success_mean_length_valid_runs,success_mean_length_mean,success_mean_length_sd,success_mean_length_min,success_mean_length_max
+baseline,3,3,0.3333333333333333,0.5773502691896258,0.0,1.0,3,-170.35766666666666,51.34202738822586,-200.0,-111.073,1,111.073,,111.073,111.073
+simhash,3,3,0.40199999999999997,0.5280265144857785,0.0,1.0,3,-161.87066666666666,50.359279475915194,-200.0,-104.784,2,105.85801941747573,1.5188928264462214,104.784,106.93203883495146
+append,3,3,0.681,0.32729344631385454,0.346,1.0,3,-140.34866666666667,35.29906197526124,-168.883,-100.875,3,113.68446072211488,14.95047059308188,100.875,130.11190817790532

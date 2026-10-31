@@ -1,0 +1,1222 @@
+{
+  "evaluated_utc": "2026-10-31T12:18:48.815786+00:00",
+  "versions": {
+    "python": "3.11.14",
+    "torch": "2.9.1+cu128",
+    "gymnasium": "1.2.2",
+    "numpy": "2.4.6",
+    "cuda_available": true,
+    "cuda_runtime": "12.8",
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+    "cudnn_version": 91002,
+    "deterministic_algorithms": false
+  },
+  "training_manifest": {
+    "created_utc": "2026-10-31T11:40:25.807977+00:00",
+    "versions": {
+      "python": "3.11.14",
+      "torch": "2.9.1+cu128",
+      "gymnasium": "1.2.2",
+      "numpy": "2.4.6",
+      "cuda_available": true,
+      "cuda_runtime": "12.8",
+      "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+      "cudnn_version": 91002,
+      "deterministic_algorithms": false
+    },
+    "steps_per_run": 100000,
+    "training_seeds": [
+      0,
+      1,
+      2
+    ],
+    "max_concurrent_jobs": 3,
+    "reset_mode": "first_seed_only",
+    "evaluation_ranges": [
+      [
+        10000,
+        10499
+      ],
+      [
+        20000,
+        20499
+      ]
+    ],
+    "source_sha256": {
+      "train.py": "ae6344192450dc4c20503369dbeaa0b955a1d96840be5ebbfbebb523831c40e9",
+      "config.py": "a77ce6369f2139143e65b51014720487a4dbba876ac36171cbf0205d2e76a7b4",
+      "dqn.py": "73b20e9cdc2a0ddfa77b2b595d0d00e9437f3ae8f914463b55f98813143fb360",
+      "replay.py": "d0ae99395fe063bfacff04008d90034caceb6e4445aced43fffad8d7bae2ac56",
+      "model.py": "3aad14e17e8df193043c911e0732e94f8847554f373086d7f60c8e095284ff98",
+      "exploration.py": "2598480c599b4192abf9d79b432cf336b6d2f3c279eea0629179c73bf6390349",
+      "evaluate.py": "6d2cace2977c3c91e2805df4db5ecd8c29b112458ba96bd11746d18daa0f0798",
+      "analyze.py": "af0a4fccda582ab22ac54f801459fd98f28cc9226c467f962022c1550831c50e",
+      "reset_study.py": "b1d32f9765de91804b5b5acaeeb7b7b9b6e4a08a93e54db6f65a3b09db17f11a"
+    },
+    "legacy_sha256": {
+      "baseline": "d85423a7d095d5b13aa7650357fe4878a2b70fb09e3cc98b751b6fc0eca0579d",
+      "simhash": "0a4fcb1c50dc838373b5d12bb8a7a5040e7e455734fe4907d3c6d71e83704d20",
+      "append": "122d6c7d122bef85396eacc9d7039beffa51b48b701a55346de0c963fe78c541"
+    },
+    "jobs": [
+      {
+        "name": "baseline-seed0",
+        "variant": "baseline",
+        "seed": 0,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/baseline-seed0",
+          "--variant",
+          "baseline",
+          "--seed",
+          "0",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "simhash-seed0",
+        "variant": "simhash",
+        "seed": 0,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/simhash-seed0",
+          "--variant",
+          "simhash",
+          "--seed",
+          "0",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "append-seed0",
+        "variant": "append",
+        "seed": 0,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/append-seed0",
+          "--variant",
+          "append",
+          "--seed",
+          "0",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "baseline-seed1",
+        "variant": "baseline",
+        "seed": 1,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/baseline-seed1",
+          "--variant",
+          "baseline",
+          "--seed",
+          "1",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "simhash-seed1",
+        "variant": "simhash",
+        "seed": 1,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/simhash-seed1",
+          "--variant",
+          "simhash",
+          "--seed",
+          "1",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "append-seed1",
+        "variant": "append",
+        "seed": 1,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/append-seed1",
+          "--variant",
+          "append",
+          "--seed",
+          "1",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "baseline-seed2",
+        "variant": "baseline",
+        "seed": 2,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/baseline-seed2",
+          "--variant",
+          "baseline",
+          "--seed",
+          "2",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "simhash-seed2",
+        "variant": "simhash",
+        "seed": 2,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/simhash-seed2",
+          "--variant",
+          "simhash",
+          "--seed",
+          "2",
+          "--steps",
+          "100000"
+        ]
+      },
+      {
+        "name": "append-seed2",
+        "variant": "append",
+        "seed": 2,
+        "command": [
+          "/usr/local/bin/python",
+          "-u",
+          "/workspace/mountaincar-dqn-count/SimHash/experiments/reset_study.py",
+          "worker",
+          "--source",
+          "runs/reset-generalization-20261031/source",
+          "--run-dir",
+          "runs/reset-generalization-20261031/runs/append-seed2",
+          "--variant",
+          "append",
+          "--seed",
+          "2",
+          "--steps",
+          "100000"
+        ]
+      }
+    ]
+  },
+  "analysis_script_sha256": "28b2f27256ed96587f50a422c1d379fef208893090e13eb37e0adcdd9ad5f5c4",
+  "fixed_control_manifest": {
+    "created_utc": "2026-10-31T12:09:11.892313+00:00",
+    "seed": 0,
+    "steps": 100000,
+    "reset_mode": "fixed_every_episode",
+    "worker_sha256": "85095f1ebac8b3f20cb63fafb1e236959af1b1f92b92e3d2b309edee789d8513",
+    "training_source_sha256": {
+      "analyze.py": "af0a4fccda582ab22ac54f801459fd98f28cc9226c467f962022c1550831c50e",
+      "config.py": "a77ce6369f2139143e65b51014720487a4dbba876ac36171cbf0205d2e76a7b4",
+      "dqn.py": "73b20e9cdc2a0ddfa77b2b595d0d00e9437f3ae8f914463b55f98813143fb360",
+      "evaluate.py": "6d2cace2977c3c91e2805df4db5ecd8c29b112458ba96bd11746d18daa0f0798",
+      "exploration.py": "2598480c599b4192abf9d79b432cf336b6d2f3c279eea0629179c73bf6390349",
+      "model.py": "3aad14e17e8df193043c911e0732e94f8847554f373086d7f60c8e095284ff98",
+      "replay.py": "d0ae99395fe063bfacff04008d90034caceb6e4445aced43fffad8d7bae2ac56",
+      "reset_study.py": "b1d32f9765de91804b5b5acaeeb7b7b9b6e4a08a93e54db6f65a3b09db17f11a",
+      "train.py": "ae6344192450dc4c20503369dbeaa0b955a1d96840be5ebbfbebb523831c40e9"
+    }
+  },
+  "runs": {
+    "baseline-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "695fa6ebbf3aa79b344c8b46ae7c1b0947907f53f1d0756792994c8fe9f69c26",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 0,
+        "failures": 1000,
+        "success_rate": 0.0,
+        "mean_return_ext": -200.0,
+        "success_mean_length": null,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5999329686164856,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.24928070294857024,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -200.0,
+          "p75": -200.0,
+          "max": -200.0
+        }
+      },
+      "training": {
+        "complete_episodes": 500,
+        "first_success_step": 97175.0,
+        "last50_success_rate": 0.02,
+        "last50_mean_return": -199.5,
+        "final_unique_buckets": 61,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      },
+      "reset_audit": {
+        "reset_count": 501,
+        "unique_initial_positions": 501,
+        "initial_position_min": -0.5999398827552795,
+        "initial_position_max": -0.4005580246448517,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "simhash-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "0d484711df63f0465843b547c17b290cf32cce700705cd79c6bf7dc0f5bd2a46",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 0,
+        "failures": 1000,
+        "success_rate": 0.0,
+        "mean_return_ext": -200.0,
+        "success_mean_length": null,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5999329686164856,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.3723650152236223,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -200.0,
+          "p75": -200.0,
+          "max": -200.0
+        }
+      },
+      "training": {
+        "complete_episodes": 500,
+        "first_success_step": 38968.0,
+        "last50_success_rate": 0.0,
+        "last50_mean_return": -200.0,
+        "final_unique_buckets": 62,
+        "mean_weighted_bonus_per_step": 0.0031408402898037303,
+        "last50_weighted_bonus_per_step": 0.0023949867018175403
+      },
+      "reset_audit": {
+        "reset_count": 501,
+        "unique_initial_positions": 501,
+        "initial_position_min": -0.5999398827552795,
+        "initial_position_max": -0.4005580246448517,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "append-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "checkpoint_sha256": "9053d6edbbbf9671b6d20470ec568eddff2f378856c3e8689a14df5b121d31d3",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 697,
+        "failures": 303,
+        "success_rate": 0.697,
+        "mean_return_ext": -151.288,
+        "success_mean_length": 130.11190817790532,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5823094844818115,
+          -0.49868789315223694
+        ],
+        "failure_mean_max_position": -0.43188620872623457,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -154.5,
+          "p75": -94.75,
+          "max": -84.0
+        }
+      },
+      "training": {
+        "complete_episodes": 567,
+        "first_success_step": 26387.0,
+        "last50_success_rate": 0.98,
+        "last50_mean_return": -132.84,
+        "final_unique_buckets": 163,
+        "mean_weighted_bonus_per_step": 0.0051523682901296495,
+        "last50_weighted_bonus_per_step": 0.004146970058242304
+      },
+      "reset_audit": {
+        "reset_count": 568,
+        "unique_initial_positions": 567,
+        "initial_position_min": -0.5999398827552795,
+        "initial_position_max": -0.4000997245311737,
+        "distinct_hash_keys_of_reset_observations": 5
+      }
+    },
+    "baseline-seed1": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 1,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "fde4e2b8549151286ac4415aca2a1ae74b461570991ff5a924a6e41154bae0f9",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 1000,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -111.073,
+        "success_mean_length": 111.073,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -124.0,
+          "p25": -115.0,
+          "median": -115.0,
+          "p75": -113.0,
+          "max": -93.0
+        }
+      },
+      "training": {
+        "complete_episodes": 568,
+        "first_success_step": 24997.0,
+        "last50_success_rate": 0.96,
+        "last50_mean_return": -131.16,
+        "final_unique_buckets": 64,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      },
+      "reset_audit": {
+        "reset_count": 569,
+        "unique_initial_positions": 569,
+        "initial_position_min": -0.5995886325836182,
+        "initial_position_max": -0.40019482374191284,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "simhash-seed1": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 1,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "f638081ddaf4909e0940009ed371acb6a161b734aede49d3fb7c7a23cf49ebc8",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 206,
+        "failures": 794,
+        "success_rate": 0.206,
+        "mean_return_ext": -180.828,
+        "success_mean_length": 106.93203883495146,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5568832755088806,
+          -0.4003455638885498
+        ],
+        "failure_mean_max_position": -0.42382288519621497,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -200.0,
+          "p75": -200.0,
+          "max": -84.0
+        }
+      },
+      "training": {
+        "complete_episodes": 598,
+        "first_success_step": 26198.0,
+        "last50_success_rate": 0.92,
+        "last50_mean_return": -137.24,
+        "final_unique_buckets": 64,
+        "mean_weighted_bonus_per_step": 0.0041689322020024636,
+        "last50_weighted_bonus_per_step": 0.002087020517270295
+      },
+      "reset_audit": {
+        "reset_count": 599,
+        "unique_initial_positions": 599,
+        "initial_position_min": -0.5995886325836182,
+        "initial_position_max": -0.40019482374191284,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "append-seed1": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 1,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "checkpoint_sha256": "15ff467676508da99c6c4a68d654d450b60e03f8995ae3382e45b543cbe48d4a",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 1000,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -100.875,
+        "success_mean_length": 100.875,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -117.0,
+          "p25": -107.0,
+          "median": -106.0,
+          "p75": -92.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 625,
+        "first_success_step": 17997.0,
+        "last50_success_rate": 0.96,
+        "last50_mean_return": -124.34,
+        "final_unique_buckets": 185,
+        "mean_weighted_bonus_per_step": 0.005624220105841797,
+        "last50_weighted_bonus_per_step": 0.0028336936201021484
+      },
+      "reset_audit": {
+        "reset_count": 626,
+        "unique_initial_positions": 626,
+        "initial_position_min": -0.5995886325836182,
+        "initial_position_max": -0.40019482374191284,
+        "distinct_hash_keys_of_reset_observations": 2
+      }
+    },
+    "baseline-seed2": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 2,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "66724de098640f45c6698915d6736d9a556220c177214e633470b5f652226410",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 0,
+        "failures": 1000,
+        "success_rate": 0.0,
+        "mean_return_ext": -200.0,
+        "success_mean_length": null,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5999329686164856,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.2765287106335163,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -200.0,
+          "p75": -200.0,
+          "max": -200.0
+        }
+      },
+      "training": {
+        "complete_episodes": 500,
+        "first_success_step": null,
+        "last50_success_rate": 0.0,
+        "last50_mean_return": -200.0,
+        "final_unique_buckets": 64,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      },
+      "reset_audit": {
+        "reset_count": 501,
+        "unique_initial_positions": 501,
+        "initial_position_min": -0.5993626713752747,
+        "initial_position_max": -0.4000083804130554,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "simhash-seed2": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 2,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "adca462375348be9898d33af3cf8c6575d1566da731355c950c95f9f46ef238f",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 1000,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -104.784,
+        "success_mean_length": 104.784,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -156.0,
+          "p25": -110.0,
+          "median": -107.0,
+          "p75": -92.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 555,
+        "first_success_step": 20198.0,
+        "last50_success_rate": 0.9,
+        "last50_mean_return": -136.76,
+        "final_unique_buckets": 64,
+        "mean_weighted_bonus_per_step": 0.0037486884685026195,
+        "last50_weighted_bonus_per_step": 0.0025242617065893273
+      },
+      "reset_audit": {
+        "reset_count": 556,
+        "unique_initial_positions": 556,
+        "initial_position_min": -0.5995745658874512,
+        "initial_position_max": -0.4000083804130554,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "append-seed2": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 2,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "checkpoint_sha256": "ec80a1c70cb8071ac3d695c346ca62267045040e181b273b182ee47d4c69deff",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 346,
+        "failures": 654,
+        "success_rate": 0.346,
+        "mean_return_ext": -168.883,
+        "success_mean_length": 110.06647398843931,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5338345766067505,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.3646499701413904,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -200.0,
+          "p75": -111.0,
+          "max": -109.0
+        }
+      },
+      "training": {
+        "complete_episodes": 578,
+        "first_success_step": 16397.0,
+        "last50_success_rate": 0.7,
+        "last50_mean_return": -162.42,
+        "final_unique_buckets": 119,
+        "mean_weighted_bonus_per_step": 0.004444100165998843,
+        "last50_weighted_bonus_per_step": 0.002573171893405592
+      },
+      "reset_audit": {
+        "reset_count": 579,
+        "unique_initial_positions": 579,
+        "initial_position_min": -0.5995745658874512,
+        "initial_position_max": -0.4000083804130554,
+        "distinct_hash_keys_of_reset_observations": 2
+      }
+    },
+    "legacy-baseline-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "d85423a7d095d5b13aa7650357fe4878a2b70fb09e3cc98b751b6fc0eca0579d",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 1000,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -154.47,
+        "success_mean_length": 154.47,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -192.0,
+          "p25": -179.0,
+          "median": -155.0,
+          "p75": -152.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 563,
+        "first_success_step": 20791.0,
+        "last50_success_rate": 0.98,
+        "last50_mean_return": -157.1,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      }
+    },
+    "legacy-simhash-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "0a4fcb1c50dc838373b5d12bb8a7a5040e7e455734fe4907d3c6d71e83704d20",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 704,
+        "failures": 296,
+        "success_rate": 0.704,
+        "mean_return_ext": -138.804,
+        "success_mean_length": 113.07386363636364,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.46460872888565063,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.3648671923658332,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -114.0,
+          "p75": -112.0,
+          "max": -109.0
+        }
+      },
+      "training": {
+        "complete_episodes": 562,
+        "first_success_step": 25397.0,
+        "last50_success_rate": 0.96,
+        "last50_mean_return": -145.94,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0033316225496979744,
+        "last50_weighted_bonus_per_step": 0.002051387291210925
+      }
+    },
+    "legacy-append-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "checkpoint_sha256": "122d6c7d122bef85396eacc9d7039beffa51b48b701a55346de0c963fe78c541",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 997,
+        "failures": 3,
+        "success_rate": 0.997,
+        "mean_return_ext": -134.531,
+        "success_mean_length": 134.33400200601807,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5238605737686157,
+          -0.5232002139091492
+        ],
+        "failure_mean_max_position": -0.5232497453689575,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -158.0,
+          "median": -153.0,
+          "p75": -92.75,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 620,
+        "first_success_step": 20785.0,
+        "last50_success_rate": 1.0,
+        "last50_mean_return": -142.48,
+        "final_unique_buckets": 165,
+        "mean_weighted_bonus_per_step": 0.0058374122111682645,
+        "last50_weighted_bonus_per_step": 0.0032635838172515516
+      }
+    },
+    "matched-fixed-baseline-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.0,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "d85423a7d095d5b13aa7650357fe4878a2b70fb09e3cc98b751b6fc0eca0579d",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 1000,
+        "failures": 0,
+        "success_rate": 1.0,
+        "mean_return_ext": -154.47,
+        "success_mean_length": 154.47,
+        "failure_mean_length": null,
+        "failure_initial_position_range": null,
+        "failure_mean_max_position": null,
+        "return_quantiles": {
+          "min": -192.0,
+          "p25": -179.0,
+          "median": -155.0,
+          "p75": -152.0,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 563,
+        "first_success_step": 20791.0,
+        "last50_success_rate": 0.98,
+        "last50_mean_return": -157.1,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0,
+        "last50_weighted_bonus_per_step": 0.0
+      },
+      "reset_audit": {
+        "reset_count": 564,
+        "unique_initial_positions": 1,
+        "initial_position_min": -0.47260767221450806,
+        "initial_position_max": -0.47260767221450806,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "matched-fixed-simhash-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": false
+      },
+      "checkpoint_sha256": "0a4fcb1c50dc838373b5d12bb8a7a5040e7e455734fe4907d3c6d71e83704d20",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 704,
+        "failures": 296,
+        "success_rate": 0.704,
+        "mean_return_ext": -138.804,
+        "success_mean_length": 113.07386363636364,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.46460872888565063,
+          -0.4000474810600281
+        ],
+        "failure_mean_max_position": -0.3648671923658332,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -200.0,
+          "median": -114.0,
+          "p75": -112.0,
+          "max": -109.0
+        }
+      },
+      "training": {
+        "complete_episodes": 562,
+        "first_success_step": 25397.0,
+        "last50_success_rate": 0.96,
+        "last50_mean_return": -145.94,
+        "final_unique_buckets": 63,
+        "mean_weighted_bonus_per_step": 0.0033316225496979744,
+        "last50_weighted_bonus_per_step": 0.002051387291210925
+      },
+      "reset_audit": {
+        "reset_count": 563,
+        "unique_initial_positions": 1,
+        "initial_position_min": -0.47260767221450806,
+        "initial_position_max": -0.47260767221450806,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    },
+    "matched-fixed-append-seed0": {
+      "config": {
+        "env_id": "MountainCar-v0",
+        "seed": 0,
+        "total_steps": 100000,
+        "capacity": 50000,
+        "batch_size": 128,
+        "learning_starts": 2000,
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "target_update_interval": 1000,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_steps": 30000,
+        "n_bits": 32,
+        "beta": 0.1,
+        "ext_reward_scale": 1.0,
+        "append_constant": true
+      },
+      "checkpoint_sha256": "122d6c7d122bef85396eacc9d7039beffa51b48b701a55346de0c963fe78c541",
+      "evaluation": {
+        "episodes": 1000,
+        "successes": 997,
+        "failures": 3,
+        "success_rate": 0.997,
+        "mean_return_ext": -134.531,
+        "success_mean_length": 134.33400200601807,
+        "failure_mean_length": 200.0,
+        "failure_initial_position_range": [
+          -0.5238605737686157,
+          -0.5232002139091492
+        ],
+        "failure_mean_max_position": -0.5232497453689575,
+        "return_quantiles": {
+          "min": -200.0,
+          "p25": -158.0,
+          "median": -153.0,
+          "p75": -92.75,
+          "max": -83.0
+        }
+      },
+      "training": {
+        "complete_episodes": 620,
+        "first_success_step": 20785.0,
+        "last50_success_rate": 1.0,
+        "last50_mean_return": -142.48,
+        "final_unique_buckets": 165,
+        "mean_weighted_bonus_per_step": 0.0058374122111682645,
+        "last50_weighted_bonus_per_step": 0.0032635838172515516
+      },
+      "reset_audit": {
+        "reset_count": 621,
+        "unique_initial_positions": 1,
+        "initial_position_min": -0.47260767221450806,
+        "initial_position_max": -0.47260767221450806,
+        "distinct_hash_keys_of_reset_observations": 1
+      }
+    }
+  },
+  "worker_matches_frozen_source": true,
+  "groups": [
+    {
+      "variant": "baseline",
+      "training_runs": 3,
+      "success_rate_valid_runs": 3,
+      "success_rate_mean": 0.3333333333333333,
+      "success_rate_sd": 0.5773502691896258,
+      "success_rate_min": 0.0,
+      "success_rate_max": 1.0,
+      "mean_return_ext_valid_runs": 3,
+      "mean_return_ext_mean": -170.35766666666666,
+      "mean_return_ext_sd": 51.34202738822586,
+      "mean_return_ext_min": -200.0,
+      "mean_return_ext_max": -111.073,
+      "success_mean_length_valid_runs": 1,
+      "success_mean_length_mean": 111.073,
+      "success_mean_length_sd": null,
+      "success_mean_length_min": 111.073,
+      "success_mean_length_max": 111.073
+    },
+    {
+      "variant": "simhash",
+      "training_runs": 3,
+      "success_rate_valid_runs": 3,
+      "success_rate_mean": 0.40199999999999997,
+      "success_rate_sd": 0.5280265144857785,
+      "success_rate_min": 0.0,
+      "success_rate_max": 1.0,
+      "mean_return_ext_valid_runs": 3,
+      "mean_return_ext_mean": -161.87066666666666,
+      "mean_return_ext_sd": 50.359279475915194,
+      "mean_return_ext_min": -200.0,
+      "mean_return_ext_max": -104.784,
+      "success_mean_length_valid_runs": 2,
+      "success_mean_length_mean": 105.85801941747573,
+      "success_mean_length_sd": 1.5188928264462214,
+      "success_mean_length_min": 104.784,
+      "success_mean_length_max": 106.93203883495146
+    },
+    {
+      "variant": "append",
+      "training_runs": 3,
+      "success_rate_valid_runs": 3,
+      "success_rate_mean": 0.681,
+      "success_rate_sd": 0.32729344631385454,
+      "success_rate_min": 0.346,
+      "success_rate_max": 1.0,
+      "mean_return_ext_valid_runs": 3,
+      "mean_return_ext_mean": -140.34866666666667,
+      "mean_return_ext_sd": 35.29906197526124,
+      "mean_return_ext_min": -168.883,
+      "mean_return_ext_max": -100.875,
+      "success_mean_length_valid_runs": 3,
+      "success_mean_length_mean": 113.68446072211488,
+      "success_mean_length_sd": 14.95047059308188,
+      "success_mean_length_min": 100.875,
+      "success_mean_length_max": 130.11190817790532
+    }
+  ],
+  "reset_sequences_match_by_seed": {
+    "0": {
+      "identical_prefix_length": 501
+    },
+    "1": {
+      "identical_prefix_length": 569
+    },
+    "2": {
+      "identical_prefix_length": 501
+    }
+  },
+  "paired_reset_seed0": {
+    "baseline": {
+      "varied_only_success": 0,
+      "fixed_only_success": 1000,
+      "both_success": 0,
+      "mean_return_difference_varied_minus_fixed": -45.53
+    },
+    "simhash": {
+      "varied_only_success": 0,
+      "fixed_only_success": 704,
+      "both_success": 0,
+      "mean_return_difference_varied_minus_fixed": -61.196
+    },
+    "append": {
+      "varied_only_success": 0,
+      "fixed_only_success": 300,
+      "both_success": 697,
+      "mean_return_difference_varied_minus_fixed": -16.757
+    }
+  },
+  "fixed_vs_legacy_weights": {
+    "baseline": {
+      "tensors_identical": true,
+      "max_abs_difference": 0.0,
+      "episode_logs_identical": true
+    },
+    "simhash": {
+      "tensors_identical": true,
+      "max_abs_difference": 0.0,
+      "episode_logs_identical": true
+    },
+    "append": {
+      "tensors_identical": true,
+      "max_abs_difference": 0.0,
+      "episode_logs_identical": true
+    }
+  },
+  "plot_refinement": {
+    "source": "plot_refinement.py",
+    "sha256": "8363e0cb82ef1bdfb6375750856046ca0333b4cf3ab7ab3170437b72f9d6fa46",
+    "input": "per_episode.csv",
+    "changed": "initial_position_vs_length.png"
+  }
+}
