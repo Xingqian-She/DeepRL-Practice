@@ -151,6 +151,7 @@ DeepRL-Practice/
 ├── compose.gui.yaml              # 可选 WSLg 显示接口
 ├── requirements.in               # 直接依赖
 ├── requirements.lock             # Linux / Python 3.11 完整版本锁
+├── shared/                       # 独立安装的公共网络组件 rl_shared
 ├── tools/
 │   ├── smoke_test.py
 │   └── runs/                     # 自动生成，不提交
@@ -164,10 +165,14 @@ DeepRL-Practice/
 ```
 
 - 目录使用小写名称，如 `cartpole-dqn`；README 和运行记录写准确的环境 ID，如 `CartPole-v1`。
-- 各项目从自己的目录直接运行，不导入其他子项目，也不依赖根目录修改 `PYTHONPATH`。不建立公共算法框架。
+- 各项目从自己的目录直接运行，不导入其他子项目，也不依赖根目录修改 `PYTHONPATH`。公共网络组件通过独立安装的 [rl_shared](shared/README.md) 复用；算法、训练流程与环境逻辑仍由各项目自行管理。
 - 简单项目可以只有一个脚本；复杂项目自行拆分网络、算法、回放池和配置。
 - 首次学习算法时可在 `theory/` 推导，后续项目直接链接已有推导。LaTeX 中间文件忽略，源码和精选 PDF 可提交。
 - 项目 README 至少说明目标、环境 ID、运行命令、重要参数、结果和参考资料；未验证的结果标明待验证。
+
+### 公共时序骨干网络
+
+[shared/](shared/README.md) 提供无输出头的 Transformer Backbone：输入/输出均为隐藏特征，支持因果滑动窗口、RoPE、残差门控、环境局部重置 KV-Cache，以及可选当前步梯度。安装、示例、Docker 测试与实测结果见组件文档；现有实验不会自动替换模型。
 
 ### 新增项目
 

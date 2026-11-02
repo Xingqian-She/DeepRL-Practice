@@ -1,0 +1,124 @@
+{
+  "timestamp_utc": "2026-11-02T02:18:25.617594+00:00",
+  "python": "3.11.14",
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "device": "NVIDIA GeForce RTX 4090 Laptop GPU",
+  "dtype": "bfloat16",
+  "compiled_parallel": false,
+  "config": {
+    "hidden_dim": 128,
+    "num_layers": 2,
+    "num_heads": 4,
+    "context_length": 256,
+    "ffn_dim": 384,
+    "alpha_init": 0.0001,
+    "qk_norm": true,
+    "final_norm": false,
+    "rms_eps": 1e-06,
+    "rope_theta": 10000.0
+  },
+  "batch_size": 32,
+  "prefix_length": 512,
+  "warmup": 5,
+  "iterations": 30,
+  "cache_bytes": 8391168,
+  "timing": "wall clock, per-call CUDA synchronization; setup/warmup/profiling excluded",
+  "notes": "Forward+backward cases include zero_grad but no optimizer. Step history is detached. Prefix case recomputes the full prefix with per-layer window masks; prefix length is fixed. Reset cases reset the same ceil(10% * B) environment slots before every call.",
+  "results": [
+    {
+      "name": "training_forward_backward",
+      "median_ms": 7.603024499985622,
+      "p95_ms": 8.870119000675913,
+      "tokens_per_second": 2154931.8958568373,
+      "peak_allocated_mib": 337.3984375,
+      "incremental_peak_mib": 309.8740234375,
+      "reset_environments_per_call": 0,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::_scaled_dot_product_efficient_attention_backward",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "prefix_recompute_no_grad",
+      "median_ms": 2.789276500152482,
+      "p95_ms": 3.7401899999167654,
+      "tokens_per_second": 11472.509089095558,
+      "peak_allocated_mib": 126.4970703125,
+      "incremental_peak_mib": 98.97265625,
+      "reset_environments_per_call": 0,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "step_no_grad",
+      "median_ms": 2.3309069997594634,
+      "p95_ms": 2.4419560004389496,
+      "tokens_per_second": 13728.561458394617,
+      "peak_allocated_mib": 34.89599609375,
+      "incremental_peak_mib": 0.99755859375,
+      "reset_environments_per_call": 0,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "step_grad_forward",
+      "median_ms": 2.760776000286569,
+      "p95_ms": 3.0244290001064655,
+      "tokens_per_second": 11590.943994253208,
+      "peak_allocated_mib": 43.3076171875,
+      "incremental_peak_mib": 9.4091796875,
+      "reset_environments_per_call": 0,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "step_grad_forward_backward",
+      "median_ms": 6.280027499997232,
+      "p95_ms": 7.435653000356979,
+      "tokens_per_second": 5095.5190880954115,
+      "peak_allocated_mib": 49.45458984375,
+      "incremental_peak_mib": 13.92724609375,
+      "reset_environments_per_call": 0,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::_scaled_dot_product_efficient_attention_backward",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "step_reset10pct_no_grad",
+      "median_ms": 2.352824500121642,
+      "p95_ms": 2.4480739994032774,
+      "tokens_per_second": 13600.674422739812,
+      "peak_allocated_mib": 34.89599609375,
+      "incremental_peak_mib": 0.99755859375,
+      "reset_environments_per_call": 4,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::scaled_dot_product_attention"
+      ]
+    },
+    {
+      "name": "step_reset10pct_grad_forward_backward",
+      "median_ms": 6.223065999620303,
+      "p95_ms": 6.716897999467619,
+      "tokens_per_second": 5142.159829568329,
+      "peak_allocated_mib": 49.45458984375,
+      "incremental_peak_mib": 13.92724609375,
+      "reset_environments_per_call": 4,
+      "sdpa_ops": [
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::_scaled_dot_product_efficient_attention_backward",
+        "aten::scaled_dot_product_attention"
+      ]
+    }
+  ]
+}
