@@ -1,8 +1,57 @@
 # 实际验证记录
 
-日期：2026-11-02。基于仓库 HEAD `90fb83b`，本次仅新增公共组件并更新根目录入口，未修改原有算法代码。
+日期：2026-11-02。包含初版组件验收及后续数值稳定性复核；两个阶段的结果分别记录如下。
 
-## 环境与正确性
+## 数值稳定性与记忆学习复核
+
+基于组件提交 `5d07943` 后的工作区修改，仅涉及 `shared`，未修改现有 RL 项目或增加依赖。模型结构、默认配置、公开接口及权重格式保持不变。
+
+修复前，有限浮点 bias `100000` 被直接转换为 FP16，实测输出和梯度出现 NaN；大负偏移则可能把原本允许的位置全部变成 `-inf`。修复后先合并内部限制，再在 FP32 中逐行去掉最大 bias，最后转换到投影 dtype；源 mask 或投影为 FP64 时保留 FP64。全屏蔽行保持 `-inf`，禁止位置不参与最大值计算。
+
+新增测试还发现：先编译 B=2、再以 B=3 配合逐 head mask 编译时，Dynamo 的符号批大小会被原有元组成员判断误拒绝。形状校验已改为显式维度比较，允许的输入形状不变；编译测试主动覆盖这个批大小变化。
+
+复核使用同一项目镜像、Python 3.11.14、PyTorch 2.9.1+cu128 和 RTX 4090 Laptop GPU。未下载新依赖，源码通过容器环境变量 `PYTHONPATH=/workspace/shared/src` 导入。
+
+| 检查 | 实际结果 |
+|---|---|
+| 完整 CPU 测试 | 24 项中 18 项通过、6 项 CUDA 测试跳过，8.853 秒 |
+| 完整 GPU 测试 | 24 项全部通过，70.808 秒，包含 CPU 测试及真实 Inductor fullgraph 编译 |
+| 浮点遮罩回归 | CPU FP32/FP64、CUDA FP32/BF16/FP16 下，输出与输入/参数梯度通过比较 |
+| 遮罩边界 | 逐行、逐 head 大正负偏移、非均匀 bias、FP64 的 ±1e300、全屏蔽行、因果/窗口/episode/padding 组合均通过；padding 输入包含 NaN，输出与梯度仍有限且 padding 为零 |
+| 浮点 mask 编译反向 | CUDA FP32/BF16/FP16 的 eager 与 fullgraph 输出、输入及参数梯度一致性通过，含批大小变化 |
+| 训练后的缓存交互 | 各记忆学习配置下，64 个样本逐步交互的最终 logits 与整序列结果一致 |
+| 静态检查 | 13 个 Python 文件 AST 和空白检查、文档相对链接、`git diff --check` 通过 |
+
+### 短记忆学习结果
+
+开头给出二元线索，中间加入独立噪声，末步预测线索；仅末步交叉熵参与训练。T=16、B=64、D=32、2 层、2 heads、W=16、FFN=64，默认 alpha=1e-4、QK Norm 开启、final norm 关闭。外接四维观测编码器与 gain=0.01 的分类头。Adam 学习率 3e-4、梯度裁剪 1.0，训练 300 次；训练和评估使用独立随机生成器，每次评估 1024 个新样本。CUDA 半精度使用 autocast 和 FP32 参数，FP16 配合初始 scale=1024 的 GradScaler，先 unscale 再裁剪。
+
+| 配置 | 完整历史准确率，种子 0 / 1 / 2 | 只看当前 token，种子 0 / 1 / 2 |
+|---|---|---|
+| CPU FP32 | 100% / 100% / 100% | 50.20% / 52.15% / 51.56% |
+| CUDA FP32 | 100% / 100% / 100% | 51.07% / 49.80% / 50.78% |
+| CUDA BF16 | 100% / 100% / 100% | 51.17% / 49.80% / 50.78% |
+| CUDA FP16 | 100% / 100% / 100% | 51.07% / 49.80% / 50.78% |
+
+12 组配置均超过 95% 的验收阈值，当前 token 对照均落在预设的 40%–60% 区间。训练损失、裁剪前梯度总范数和最终参数均有限，默认门控下首步注意力投影梯度非零。这证明当前小模型可以学会使用历史线索，并非 RL 训练成绩，也不证明其他任务、序列长度或超参数下必然收敛。正常序列训练使用 `forward`；缓存 `step` 的历史始终 detached。
+
+实际验收命令（仓库根目录）：
+
+```bash
+docker compose run --rm -T --no-deps \
+  -e PYTHONPATH=/workspace/shared/src runner \
+  python -B -m unittest discover -s shared/tests -v
+
+docker compose -f compose.yaml -f compose.gpu.yaml run --rm -T --no-deps \
+  -e PYTHONPATH=/workspace/shared/src runner \
+  python -B -m unittest discover -s shared/tests -v
+```
+
+完整输出保存在本机被 Git 忽略的 `shared/runs/stability-2026-11-02/cpu.txt` 和 `gpu.txt`；测试每次打印各个种子的 JSON 结果。下方初版性能基准及原算法回归记录予以保留，本轮未重新测量它们。
+
+## 初版环境与正确性
+
+初版基于仓库 HEAD `90fb83b`，新增公共组件并更新根目录入口，未修改原有算法代码。
 
 - Docker 项目镜像 `deeprl-practice:py311-cu128`，Python 3.11.14，PyTorch 2.9.1+cu128，CUDA 12.8。
 - GPU：NVIDIA GeForce RTX 4090 Laptop GPU，支持 BF16。
@@ -23,7 +72,7 @@
 
 完整命令见 [README](README.md)。编译测试包含 packed episode、padding 和 T>W 的窗口掩码，不只是导入或空调用。
 
-## 性能实测
+## 初版性能实测
 
 默认基准：B=32、完整前缀 T=512、D=128、2 层、4 heads、W=256、FFN=384、alpha=1e-4；FP32 参数配合 CUDA BF16 autocast。每项先 warmup 5 次，再测量 30 次；逐次 CUDA 同步，计入 Python 调度与算子发射开销，不含初始化、编译、warmup 和 profiler。训练/反向项目包含 zero_grad，不含 optimizer。
 

@@ -2,6 +2,8 @@
 
 这是独立安装的轻量组件包，仅依赖 PyTorch。输入、输出都是 `(Batch, Seq_Len, Hidden_Dim)` 连续特征。包内不处理原始观测，不包含 Encoder、Actor、Critic、RND、损失函数或优化器；现有实验模型不受影响。
 
+它在 RL 中承担“记忆”的角色：当前观测不足以判断状态时，策略可以通过注意力读取过去的线索。外部 Encoder 先编码观测，骨干整合历史，再由外部 Actor/Critic 输出动作分布和价值。能否学会利用历史，需要学习测试验证；仅检查输出形状和有限梯度还不够。
+
 ## 安装和运行
 
 在仓库根目录、现有 Docker 镜像中安装，无需下载新依赖或修改 `PYTHONPATH`：
@@ -52,6 +54,19 @@ RMS 的半精度输入统计使用 FP32；RoPE 的相位和频率始终用 FP32 
 
 QK-RMSNorm 保留标准 SDPA 的 `1/sqrt(head_dim)` 缩放，是 QK 归一化的一种变体；不同于原 QKNorm 论文的 L2 归一化与可学习温度。这里实现稳定性机制，测试不等同于任何具体 RL 任务的收敛证据。
 
+当前保留这组组件，理由如下：
+
+| 组件 | 保留理由 |
+|---|---|
+| Pre-RMSNorm | 分支先归一化，保留直接的残差通路；半精度统计使用 FP32 |
+| Q/K 归一化 | 减少注意力分数对 Q/K 模长变化的敏感度 |
+| 小标量残差门控 | 每层只增加两个参数，初始接近恒等映射，再逐渐学习使用历史 |
+| RoPE | 提供时序位置信息，支持窗口回绕和 episode 重置，无需不断增长的位置表 |
+| SwiGLU | 当前未发现需要更换的稳定性问题，保留现有权重结构 |
+| 无 Dropout、显式缓存 | 减少采样时的额外随机性，使 episode 生命周期由调用方明确控制 |
+
+标量残差门控参考 [ReZero](https://arxiv.org/abs/2003.04887)；接近恒等映射的初始化在 [GTrXL](https://proceedings.mlr.press/v119/parisotto20a.html) 中也有 RL 实验依据。这里的组件组合和短记忆测试不能替代具体 RL 算法、环境的收敛验证。
+
 ## 并行训练：位置、episode 和掩码
 
 ```python
@@ -69,7 +84,9 @@ hidden = model(
 
 默认每层仅允许同 episode、有效键、过去 W-1 步和自身。`is_causal=False` 取消因果与窗口限制，但保留 episode、padding、自定义掩码。显式 masks 和内部规则取交集；浮点 bias 只对允许位置生效，应为有限值或 `-inf`，不传 `NaN/+inf`。
 
-`attn_mask` 形状为 `(T,T)` 或 `(B,1/H,T,T)`，batch 维也可为 1。布尔 `True` 表示允许注意力，与某些 `key_padding_mask` 的含义相反。浮点 mask 自动转换到投影 dtype。全屏蔽行的 Attention 输出为零；有效 query 的残差和 FFN 仍会执行，因此整个骨干输出不必为零。
+`attn_mask` 形状为 `(T,T)` 或 `(B,1/H,T,T)`，batch 维也可为 1。布尔 `True` 表示允许注意力，与某些 `key_padding_mask` 的含义相反。浮点 mask 先合并内部限制，在 FP32 中对每行减去允许位置的最大 bias，再转换到投影 dtype；源 mask 或投影为 FP64 时使用 FP64。逐行减去常量保持注意力的相对权重，同时避免大偏移（如 `100000`）直接转换到 FP16 时溢出，或在 BF16 中抹掉较小差异。禁止位置不参与最大值计算，全屏蔽行保持 `-inf`。建议用 FP32 构建 bias，预处理无法恢复输入在调用前已丢失的精度。
+
+全屏蔽行的 Attention 输出为零；有效 query 的残差和 FFN 仍会执行，因此整个骨干输出不必为零。
 
 当不需要额外掩码且 T≤W，使用原生 `is_causal=True` 快速路径；其他约束合并为显式 SDPA mask。显式窗口 mask 仍是稠密矩阵，不把长序列计算复杂度变成稀疏 O(TW)。当前依赖下它可能选择 efficient attention 而非 FlashAttention；性能以实际后端和输入规模为准。
 
@@ -106,7 +123,7 @@ loss.backward()  # 当前输入、当前步骨干及外部 critic 都可获得�
 
 `enable_grad=False` 默认关闭当前骨干梯度；True 使用局部 `torch.set_grad_enabled(True)`，也能覆盖外层 `no_grad()`。`inference_mode()` 不能这样覆盖，True 时明确报错，须先退出该上下文。外部 Encoder/Heads 的梯度仍由它们各自所在上下文控制。
 
-历史 K/V 始终 detached，**不实现跨时间 BPTT**。开启梯度时，以 out-of-place scatter 构造独立 K/V 快照，当前 Q/K/V 保持可微，保存到持久缓存的副本 detached。因此可以先计算多个 Step、继续覆盖/重置缓存，再对先前输出执行 backward；正常的 optimizer 参数更新仍应在相关 backward 全部完成之后。快照带来额外分配和显存成本，默认无梯度路径不承担此成本。
+历史 K/V 始终 detached，**不实现跨时间 BPTT**。正常的序列训练使用 `forward`，让末步损失能沿历史 token 的计算图传回；不要把一串 `step(enable_grad=True)` 当作等价的序列训练。开启单步梯度时，以 out-of-place scatter 构造独立 K/V 快照，当前 Q/K/V 保持可微，保存到持久缓存的副本 detached。因此可以先计算多个 Step、继续覆盖/重置缓存，再对先前输出执行 backward；正常的 optimizer 参数更新仍应在相关 backward 全部完成之后。快照带来额外分配和显存成本，默认无梯度路径不承担此成本。
 
 ### 混合精度
 
@@ -131,11 +148,11 @@ with torch.autocast("cuda", dtype=torch.bfloat16):
 
 ## 测试和基准
 
-CPU 测试：
+完整 CPU 测试（包括短记忆学习；CUDA 项自动跳过）：
 
 ```bash
 docker compose run --rm -T runner bash -lc \
-  'python -m pip install --no-index --no-deps --no-build-isolation -e ./shared && python -m unittest discover -s shared/tests -p test_transformer.py -v'
+  'python -m pip install --no-index --no-deps --no-build-isolation -e ./shared && python -m unittest discover -s shared/tests -v'
 ```
 
 GPU、BF16/FP16、真实 Inductor fullgraph 编译训练验证（首次编译较慢）：
@@ -144,6 +161,12 @@ GPU、BF16/FP16、真实 Inductor fullgraph 编译训练验证（首次编译较
 docker compose -f compose.yaml -f compose.gpu.yaml run --rm -T runner bash -lc \
   'python -m pip install --no-index --no-deps --no-build-isolation -e ./shared && python -m unittest discover -s shared/tests -v'
 ```
+
+`test_float_masks.py` 检查大正负偏移、非均匀/逐 head bias、全屏蔽行，以及因果、窗口、episode、padding 的组合；比较输出与梯度，并在 CUDA FP32/BF16/FP16 下检查真实 fullgraph 编译反向。
+
+`test_memory_learning.py` 使用固定种子 `0/1/2`：开头给出二元线索，中间有独立噪声，最后一步预测线索；仅末步交叉熵参与训练。配置为 T=16、B=64、D=32、2 层、2 heads、W=16、FFN=64，保留默认门控与其他结构选项；外接 `Linear(4,32)` 编码器和 gain=0.01 的两分类输出头。Adam 学习率 3e-4，梯度裁剪 1.0，训练 300 次，在独立的 1024 个样本上要求每个种子准确率至少 95%，只看当前 token 的同一网络准确率在 40%–60%。还检查训练后的缓存交互与整序列 logits 一致。
+
+学习测试覆盖 CPU FP32 和 CUDA FP32/BF16/FP16，参数保留 FP32；FP16 使用 GradScaler（初始 scale=1024），裁剪在 unscale 后执行。每次运行打印各个种子的结果。只运行记忆测试时，把上述命令的 discover 参数改为 `-s shared/tests -p test_memory_learning.py -v`。
 
 性能基准：
 

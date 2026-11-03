@@ -133,11 +133,13 @@ class TransformerBackbone(nn.Module):
             if attn_mask.device != x.device:
                 raise ValueError("attn_mask must be on the input device")
             if attn_mask.ndim == 2:
-                correct_shape = attn_mask.shape == (t, t)
+                correct_shape = attn_mask.shape[0] == t and attn_mask.shape[1] == t
             elif attn_mask.ndim == 4:
-                correct_shape = (attn_mask.shape[0] in (1, b) and
-                                 attn_mask.shape[1] in (1, self.config.num_heads) and
-                                 attn_mask.shape[2:] == (t, t))
+                # Explicit comparisons also guard symbolic batch sizes under
+                # torch.compile; tuple membership can reject a valid mask.
+                correct_shape = ((attn_mask.shape[0] == 1 or attn_mask.shape[0] == b) and
+                                 (attn_mask.shape[1] == 1 or attn_mask.shape[1] == self.config.num_heads) and
+                                 attn_mask.shape[2] == t and attn_mask.shape[3] == t)
             else:
                 correct_shape = False
             if not correct_shape:
@@ -145,7 +147,16 @@ class TransformerBackbone(nn.Module):
             if attn_mask.dtype == torch.bool:
                 allowed = allowed & attn_mask
             else:
-                allowed = attn_mask.to(self._projection_dtype(x)).masked_fill(~allowed, float("-inf"))
+                projection_dtype = self._projection_dtype(x)
+                stats_dtype = (torch.float64 if torch.float64 in (attn_mask.dtype, projection_dtype)
+                               else torch.float32)
+                bias = attn_mask.to(stats_dtype).masked_fill(~allowed, float("-inf"))
+                # Softmax is invariant to row offsets. Remove them BEFORE a
+                # half cast, which could overflow or erase small differences.
+                # Structural exclusions must not participate in the maximum.
+                row_max = bias.amax(dim=-1, keepdim=True)
+                bias = bias - torch.where(torch.isfinite(row_max), row_max, 0.0)
+                allowed = bias.to(projection_dtype)
         return position_ids, allowed, False
 
     def forward(self, x, *, episode_starts=None, valid_mask=None, position_ids=None,
