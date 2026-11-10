@@ -1,0 +1,57 @@
+{
+  "batch": "course-10m-v1",
+  "baseline": "baseline-v1",
+  "new_tasks": 63,
+  "reference_tasks": 21,
+  "new_task_statuses": [
+    "completed"
+  ],
+  "selected_attempts": [
+    1
+  ],
+  "unique_verified_artifacts": 429,
+  "artifact_hash_mismatches": 0,
+  "source_fingerprint": "47786bd7215381980b7c74452a38ab74173a1fa3ed34b188166ef49ad271f179",
+  "source_matches_frozen": true,
+  "new_training_runs": 9,
+  "new_training_steps": 89985024,
+  "comparison_training_runs": 12,
+  "comparison_training_log_rows": 58584,
+  "periodic_evaluations": 588,
+  "periodic_episode_records": 11760,
+  "heldout_evaluations": 72,
+  "heldout_episode_records": 7200,
+  "episode_records_recomputed": 18960,
+  "scalar_comparisons_passed": 10044,
+  "batch_started_beijing": "2026-11-09T10:20:50.338488+08:00",
+  "batch_finished_beijing": "2026-11-10T16:30:43.813319+08:00",
+  "consistency_warnings": 0,
+  "max_logprob_error": 2.193450927734375e-05,
+  "environment": {
+    "precision": "float32; math SDPA; TF32/AMP disabled",
+    "device": "cuda",
+    "python": "3.11.14",
+    "dependencies": {
+      "torch": "2.9.1",
+      "gymnasium": "1.2.2",
+      "numpy": "2.4.6",
+      "box2d-py": "2.3.5"
+    },
+    "hardware": {
+      "torch": "2.9.1+cu128",
+      "cuda": "12.8",
+      "device_name": "NVIDIA GeForce RTX 4090 Laptop GPU"
+    },
+    "requirements_sha256": "4835811ee15a5c25fc62542a14bec560c7a051b83e8235a163a057844a13c73b",
+    "evaluation_protocol": "batched-policy-v2"
+  },
+  "analysis_environment": {
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.6"
+  },
+  "new_training_elapsed_hours": 28.499484072400556,
+  "new_training_evaluation_seconds": 1362.6757726289943,
+  "new_heldout_evaluation_seconds": 728.0788515519962,
+  "note": "All checks read stored artifacts; no retraining, new evaluation, checkpoint deserialization, or writes to runs."
+}

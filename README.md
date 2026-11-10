@@ -4,11 +4,19 @@
 
 当前提供 CartPole 随机策略环境验证，以及 [CartPole DQN 训练实验](cartpole-dqn/README.md)。随机策略的回报仅用于检查运行链路；DQN 的运行方式、结果与当前限制见子项目说明。
 
+[LunarLander PPO-POMDP 实验](lunarlander-ppo-pomdp/README.md)使用 PPO、时序 Transformer 与动作历史，支持全观测、部分观测和两种课程；共享/独立骨干、学习率衰减、优势标准化、价值裁剪与熵系数调度均可对照。训练默认 `--compile auto`，保留 FP32/math SDPA、关闭 TF32/AMP；周期评估使用独立策略副本与批量推理。
+
+该实验已完成两阶段三种子对照：第一阶段 FO01–FO07 按既定规则选择 FO04（独立骨干、线性学习率）；第二阶段 PO01–PO03 比较直接部分观测训练、固定课程和成绩课程。课程显著改善了间歇性传感器缺失（`p=0.5`）下的表现，但持续缺失（`p=1`）任务尚未达标，且课程模型在该条件下的 sample 与 argmax 表现差异明显。结果、图表与结论边界见 [第一阶段报告](lunarlander-ppo-pomdp/reports/FO01-FO07-stage1-analysis.md)和[第二阶段报告](lunarlander-ppo-pomdp/reports/PO01-PO03-stage2-analysis.md)。
+
+项目提供周期梯度诊断、样本覆盖率、源码/配置指纹和跨种子汇总。分阶段多种子实验和留出评估命令见 [实验指令](lunarlander-ppo-pomdp/EXPERIMENTS.md)，实现测试、烟测与性能基准的历史记录见 [验证记录](lunarlander-ppo-pomdp/VALIDATION.md)。
+
+LunarLander 另提供 [Windows 统一实验入口](lunarlander-ppo-pomdp/README.md#windows-统一实验入口)：一条 PowerShell 命令完成 Docker 检查、FO01 三种子训练、留出评估和基本统计，再次执行可检查并补跑未完成任务。课程实验使用独立的[第二阶段一键入口](lunarlander-ppo-pomdp/README.md#第二阶段一键入口)。无需手动进入容器，默认不自动启动 5000 万步长跑。
+
 ## 环境与前提
 
 - Windows Docker Desktop，启用 **WSL2 后端、Linux 容器和 Ubuntu 的 WSL integration**。
 - 下文命令从 WSL 终端执行，仓库位于 `/mnt/d/py/DeepRL-Practice`。
-- Python、Gymnasium Classic Control、CUDA 版 PyTorch、TensorBoard 和视频依赖都安装在容器内，宿主机无需安装这些 Python 包。
+- Python、Gymnasium Classic Control / Box2D、CUDA 版 PyTorch、TensorBoard 和视频依赖都安装在容器内，宿主机无需安装这些 Python 包。
 - GPU 需要支持 WSL 的 NVIDIA Windows 驱动；默认运行和录制不需要 GPU。
 - 弹窗使用 WSLg。LaTeX 是当前例外：源码放各项目 `theory/`，使用本机已有 LaTeX 环境编译，镜像不包含 TeX。
 
@@ -210,7 +218,7 @@ runs/<UTC时间戳-seed-唯一后缀>/
 
 ## 更新依赖
 
-共享环境首轮只包含 Classic Control，不预装 Box2D、Atari、MuJoCo。新增依赖统一修改 `requirements.in`，重新生成锁并构建；不要依赖给运行中的容器临时 `pip install` 来维护环境。
+共享环境包含 Classic Control 和 LunarLander 所需的 Box2D；Box2D 编译所需 SWIG 在 Docker 构建时准备。不预装 Atari、MuJoCo。新增依赖统一修改 `requirements.in`，重新生成锁并构建；不要依赖给运行中的容器临时 `pip install` 来维护环境。已有镜像需要重建后才能使用新增的 Box2D 环境。
 
 TensorBoard 2.20 的启动入口仍使用 `pkg_resources`，因此直接依赖中固定了兼容的 `setuptools==80.9.0`。镜像构建会执行 `pip check` 和 `tensorboard --version`，运行服务后还需检查页面是否可访问。
 
