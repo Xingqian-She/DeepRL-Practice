@@ -11,6 +11,7 @@ import subprocess
 import sys
 
 import run_experiments as managed
+from curriculum import curriculum_record
 from summarize_experiments import aggregate, read_run, select_recipe, write_csv
 
 
@@ -222,28 +223,6 @@ def freeze(root, recipe, plan):
     path = recipe_path(root, plan["contract"]["smoke"])
     if not path.exists():
         managed.write_json(path, {**recipe, "frozen_at": managed.now()})
-
-
-def curriculum_record(path, metadata):
-    config, progress = metadata["parameters"], metadata.get("curriculum", {})
-    phase_steps = progress.get("stage_steps")
-    basis = "recorded performance stages"
-    if config["sensors"]["schedule"] != "performance":
-        # Count the exact scheduled p for each collected vector step, including partial runs.
-        from sensors import SensorConfig
-        sensors = SensorConfig(**config["sensors"])
-        counts = {"p0": 0, "ramp": 0, "p1": 0}
-        budget = config["total_timesteps"] // (config["num_envs"] * config["num_steps"]) * config["num_envs"] * config["num_steps"]
-        for step in range(0, metadata.get("last_completed_step", metadata.get("global_step", 0)), config["num_envs"]):
-            probability = sensors.failure_probability(step, budget)
-            counts["p0" if probability == 0 else "p1" if probability == 1 else "ramp"] += config["num_envs"]
-        phase_steps, basis = counts, "derived from configured schedule and completed vector steps"
-    return {"experiment_id": metadata["experiment_id"], "seed": config["seed"],
-            "status": metadata["status"], "path": str(path), "global_step": metadata.get("global_step"),
-            "sensor_mode": config["sensors"]["mode"], "schedule": config["sensors"]["schedule"],
-            "final_probability": progress.get("probability"), "entered_final": metadata.get("entered_final"),
-            "final_task_solved": metadata.get("final_task_solved"), "stage_steps": phase_steps,
-            "stage_steps_basis": basis, "transitions": progress.get("transitions", [])}
 
 
 def report(root, state, recipe, baseline):

@@ -81,7 +81,8 @@ class AccelerationTests(unittest.TestCase):
     @unittest.skipUnless(torch.cuda.is_available(), "需要 GPU 容器")
     def test_real_inductor_outputs_gradients_cache_and_ppo(self):
         for backbone_mode, previous_action in (("shared", True), ("shared", False),
-                                               ("separate", True), ("separate", False)):
+                                               ("separate", True), ("separate", False),
+                                               ("encoder_decoder", True), ("encoder_decoder", False)):
             with self.subTest(backbone_mode=backbone_mode, previous_action=previous_action):
                 device = configure_runtime(3, "cuda")
                 config = small_config(device="cuda", compile_mode="on")

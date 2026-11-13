@@ -43,6 +43,8 @@ def training_arguments(parameters):
             arguments.append("--previous-action" if value else "--no-previous-action")
         elif key == "normalize_advantage":
             arguments.append("--normalize-advantage" if value else "--no-normalize-advantage")
+        elif key == "xy_fourier":
+            arguments.append("--xy-fourier" if value else "--no-xy-fourier")
         else:
             arguments.extend(["--compile" if key == "compile_mode" else "--" + key.replace("_", "-"), str(value)])
     return arguments

@@ -44,9 +44,23 @@ class GradientProbe:
                        "value_objective_grad_norm": math.sqrt(square_norm(vg)),
                        "shared_gradient_cosine": max(-1.0, min(1.0, dot / denominator)) if denominator else None,
                        "probe_samples": int(selected.sum().item())}
+        if agent.config.backbone_mode == "encoder_decoder":
+            cross = [i for i, (name, _) in enumerate(agent.named_parameters()) if ".cross_attention." in name]
+            encoder_ids = {id(p) for p in agent.encoder.parameters()} | {
+                id(p) for p in agent.backbone.encoder.parameters()}
+            encoder = [i for i, p in enumerate(parameters) if id(p) in encoder_ids]
+            self.result.update(
+                cross_attention_policy_grad_norm=math.sqrt(square_norm([pg[i] for i in cross])),
+                encoder_policy_grad_norm=math.sqrt(square_norm([pg[i] for i in encoder])),
+                encoder_value_grad_norm=math.sqrt(square_norm([vg[i] for i in encoder])),
+            )
 
     @torch.no_grad()
     def finish(self, agent):
+        if agent.config.backbone_mode == "encoder_decoder":
+            gates = torch.stack([block.alpha_cross.detach().double() for block in agent.backbone.decoder])
+            self.result.update(cross_gate_mean=gates.mean().item(), cross_gate_min=gates.min().item(),
+                               cross_gate_max=gates.max().item())
         totals = {group: [0.0, 0.0] for group in ("total", "shared", "policy_only", "value_only")}
         for name, parameter in agent.named_parameters():
             before = self.before[name].double()

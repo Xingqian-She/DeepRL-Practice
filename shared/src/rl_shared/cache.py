@@ -2,7 +2,7 @@
 
 import torch
 
-from .config import TransformerConfig
+from .config import EncoderDecoderConfig, TransformerConfig
 
 
 class KVCache:
@@ -45,6 +45,25 @@ class KVCache:
             self.keys, self.values, self.lengths, self.next_positions, self.slot_indices
         ))
 
+    def tensors(self) -> dict[str, torch.Tensor]:
+        """All mutable state, for diagnostics/compilation checks; caller read-only."""
+        return {name: getattr(self, name) for name in ("keys", "values", "lengths", "next_positions")}
+
+    def _prepare_step(self, episode_starts):
+        if episode_starts is not None:
+            self.reset(episode_starts)
+        positions = self.next_positions.clone().unsqueeze(1)
+        indices = positions.remainder(self.config.context_length).view(self.batch_size, 1, 1, 1)
+        indices = indices.expand(-1, self.config.num_heads, 1, self.config.head_dim)
+        lengths = (self.lengths + 1).clamp(max=self.config.context_length)
+        allowed = (self.slot_indices[None, :] < lengths[:, None])[:, None, None, :]
+        return positions, indices, lengths, allowed
+
+    def _advance(self, lengths):
+        with torch.no_grad():
+            self.next_positions.add_(1)
+            self.lengths.copy_(lengths)
+
     def validate_mask(self, mask: torch.Tensor) -> None:
         if not isinstance(mask, torch.Tensor) or mask.dtype != torch.bool:
             raise TypeError("reset/episode_starts mask must be a bool Tensor")
@@ -69,3 +88,41 @@ class KVCache:
             raise ValueError("cache batch_size does not match the input")
         if self.device != device or self.dtype != dtype:
             raise ValueError(f"cache device/dtype must match projected K/V ({device}, {dtype})")
+
+
+class EncoderDecoderCache(KVCache):
+    """One ring and one episode clock for encoder/self, decoder/self and cross KV.
+
+    The layer axis is [encoder self, decoder self, decoder cross]. Every decoder
+    layer has its own cross projection. Views below share the preallocated ring;
+    reset only invalidates metadata, and advancing happens once per input pair.
+    """
+    def __init__(self, config: EncoderDecoderConfig, batch_size: int, *, device, dtype) -> None:
+        super().__init__(config.cache_config(), batch_size, device=device, dtype=dtype)
+        self.config = config
+
+    @property
+    def encoder_keys(self):
+        return self.keys[:self.config.num_layers]
+
+    @property
+    def encoder_values(self):
+        return self.values[:self.config.num_layers]
+
+    @property
+    def decoder_keys(self):
+        begin = self.config.num_layers
+        return self.keys[begin:begin + self.config.decoder_layers]
+
+    @property
+    def decoder_values(self):
+        begin = self.config.num_layers
+        return self.values[begin:begin + self.config.decoder_layers]
+
+    @property
+    def cross_keys(self):
+        return self.keys[self.config.num_layers + self.config.decoder_layers:]
+
+    @property
+    def cross_values(self):
+        return self.values[self.config.num_layers + self.config.decoder_layers:]

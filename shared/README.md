@@ -1,8 +1,40 @@
 # rl_shared：RL 时序 Transformer 公共组件
 
-这是独立安装的轻量组件包，仅依赖 PyTorch。输入、输出都是 `(Batch, Seq_Len, Hidden_Dim)` 连续特征。包内不处理原始观测，不包含 Encoder、Actor、Critic、RND、损失函数或优化器；现有实验模型不受影响。
+这是独立安装的轻量组件包，仅依赖 PyTorch。输入、输出都是 `(Batch, Seq_Len, Hidden_Dim)` 连续特征，提供单堆栈 Transformer 和时序 Encoder–Decoder。原始观测投影、Actor、Critic、RND、损失函数和优化器由调用方管理。
 
 它在 RL 中承担“记忆”的角色：当前观测不足以判断状态时，策略可以通过注意力读取过去的线索。外部 Encoder 先编码观测，骨干整合历史，再由外部 Actor/Critic 输出动作分布和价值。能否学会利用历史，需要学习测试验证；仅检查输出形状和有限梯度还不够。
+
+## 时序 Encoder–Decoder
+
+`EncoderDecoderBackbone` 接收两路**独立投影后的、时间对齐的特征**，返回 Encoder 历史 `H` 和 Decoder 特征 `Z`。默认 Encoder/Decoder 各 4 层；`num_layers` 表示 Encoder 深度，`decoder_layers` 单独控制 Decoder 深度。两路共用宽度、head 数、每次注意力的窗口和 episode 内 RoPE 位置。
+
+```python
+import torch
+from rl_shared import EncoderDecoderBackbone, EncoderDecoderConfig
+
+model = EncoderDecoderBackbone(EncoderDecoderConfig(
+    hidden_dim=128, num_layers=4, decoder_layers=4, context_length=32,
+))
+encoder_inputs = torch.randn(8, 64, 128)  # 外部独立投影 A
+decoder_inputs = torch.randn(8, 64, 128)  # 外部独立投影 B
+history, policy_features = model(encoder_inputs, decoder_inputs)
+# critic(history), actor(policy_features) 由调用方定义
+
+cache = model.create_cache(8)
+h_t, z_t = model.step(encoder_inputs[:, :1], decoder_inputs[:, :1], cache)
+```
+
+并行 `forward(encoder_inputs, decoder_inputs, *, episode_starts=None, valid_mask=None, position_ids=None)` 的输入均为 `(B,T,D)`，输出 `(H,Z)` 的形状相同。两路时间轴必须一致；元数据的类型、padding、位置和 episode 语义与下文的单堆栈接口相同。此接口始终因果，不提供取消因果约束的选项。
+
+每个 Decoder 层依次执行 Pre-RMSNorm 自注意力、交叉注意力、SwiGLU；每个子层都有小的可学习残差门控。交叉注意力分别归一化 Query 输入与 Encoder memory，用独立的 Q、融合 KV、输出投影，Q/K RMSNorm 后使用同一时间坐标的 RoPE。所有层读取最终的 `H`，**不 detach**，序列训练的策略梯度能够通过历史位置更新 Encoder。
+
+三类注意力均只读取同一 episode 的有效 token，且 `0 <= t-s < W`，包括当前 `H_t`。padding 输入先清零，两路 padding 输出也清零。由于层间传递，Encoder/Critic 的原始输入感受野为 `1 + E*(W-1)`，策略最长为 `1 + (E+D)*(W-1)`；这里的窗口指每次注意力。4+4 层、W32 对应 125/249 个 token。配置的 `value_warmup_length`、`warmup_length` 按这两个公式给出保守重放长度。
+
+`EncoderDecoderCache` 用一个预分配环形存储统一保存三组 K/V，层轴顺序为 Encoder self、Decoder self、Decoder cross。`encoder_keys/values`、`decoder_keys/values`、`cross_keys/values` 是只读检查用的视图；`keys/values` 为完整存储。各 Decoder 层的 memory 投影独立，每步只对新 `H_t` 做一次投影。共享 `lengths/next_positions` 每步只推进一次，`reset(mask)` 同时使三组缓存的对应环境失效。`tensors()` 返回全部可变状态，`nbytes` 统计存储与元数据。
+
+`step(..., cache, episode_starts=None, enable_grad=False)` 与下文单堆栈相同：默认无梯度，历史缓存始终脱离计算图；启用当前步梯度时，当前 `H_t` 的交叉注意力路径保留梯度，并通过快照支持延迟 backward。PPO 训练应使用 `forward` 重算包含预热前缀的完整计算图，损失只选学习区。参数更新后从原始输入重建三组缓存，不复用旧参数产生的 memory KV。
+
+通用组件使用 PyTorch SDPA 自动分派；调用方可用 `sdpa_kernel` 选择后端。LunarLander 正式对比维持 FP32/math SDPA，单独的 CUDA 测试强制 efficient attention 验证融合前向、反向及缓存一致性。
 
 ## 安装和运行
 

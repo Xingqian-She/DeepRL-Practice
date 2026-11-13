@@ -1,0 +1,184 @@
+{
+  "new_batch": "encoder-decoder-10m-v1",
+  "historical_batch": "course-10m-v1",
+  "new_tasks": 42,
+  "historical_tasks": 42,
+  "selected_attempts": [
+    1
+  ],
+  "unique_verified_artifacts": 306,
+  "artifact_hash_mismatches": 0,
+  "source_fingerprints": {
+    "historical": "47786bd7215381980b7c74452a38ab74173a1fa3ed34b188166ef49ad271f179",
+    "new": "a239ed63f7f91c04351310302d347b4342cb82ef21d4affc081db4cd481bba3e"
+  },
+  "current_source_fingerprint": "a239ed63f7f91c04351310302d347b4342cb82ef21d4affc081db4cd481bba3e",
+  "current_source_matches_new_batch": true,
+  "environment": {
+    "precision": "float32; math SDPA; TF32/AMP disabled",
+    "device": "cuda",
+    "python": "3.11.14",
+    "dependencies": {
+      "torch": "2.9.1",
+      "gymnasium": "1.2.2",
+      "numpy": "2.4.6",
+      "box2d-py": "2.3.5"
+    },
+    "hardware": {
+      "torch": "2.9.1+cu128",
+      "cuda": "12.8",
+      "device_name": "NVIDIA GeForce RTX 4090 Laptop GPU"
+    },
+    "requirements_sha256": "4835811ee15a5c25fc62542a14bec560c7a051b83e8235a163a057844a13c73b",
+    "evaluation_protocol": "batched-policy-v2"
+  },
+  "config_differences": [
+    {
+      "old": "PO01",
+      "new": "ED_PO01",
+      "seed": 42,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "ED_PO03",
+      "seed": 42,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    },
+    {
+      "old": "PO01",
+      "new": "ED_PO01",
+      "seed": 43,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "ED_PO03",
+      "seed": 43,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    },
+    {
+      "old": "PO01",
+      "new": "ED_PO01",
+      "seed": 44,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "ED_PO03",
+      "seed": 44,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true
+      }
+    }
+  ],
+  "new_training_steps": 59990016,
+  "comparison_training_rows": 58584,
+  "periodic_evaluations": 588,
+  "heldout_evaluations": 72,
+  "episode_records_recomputed": 18960,
+  "scalar_comparisons_passed": 10044,
+  "new_started_beijing": "2026-11-11T09:34:43.975023+08:00",
+  "new_finished_beijing": "2026-11-12T13:58:12.994796+08:00",
+  "new_training_elapsed_hours": 26.337418962831105,
+  "new_attempt_wall_hours": 28.388197712500006,
+  "new_heldout_evaluation_seconds": 1019.2890656869422,
+  "new_diagnostic_probes": 594,
+  "new_consistency_warnings": 0,
+  "new_max_logprob_error": 1.5735626220703125e-05,
+  "final_task_solved_count": 0,
+  "analysis_environment": {
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.6"
+  },
+  "note": "Historical sources differ intentionally. Equal seed labels do not imply matched model initializations. No training, inference, checkpoint loading, or runs writes."
+}

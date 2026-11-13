@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass, field
 
-from rl_shared import TransformerConfig
+from rl_shared import EncoderDecoderConfig, TransformerConfig
 
-from sensors import SensorConfig
+from sensors import MODEL_INPUT_DIM, SensorConfig
+from xy_fourier import XY_FOURIER_DIM
 
 
 ENV_ID = "LunarLander-v3"
@@ -19,24 +20,41 @@ class AgentConfig:
     alpha_init: float = 1e-4
     use_previous_action: bool = True
     backbone_mode: str = "shared"
+    decoder_layers: int = 4
+    xy_fourier: bool = False
+
+    @property
+    def input_dim(self):
+        return MODEL_INPUT_DIM + (XY_FOURIER_DIM if self.xy_fourier else 0)
 
     def backbone_config(self):
-        return TransformerConfig(
+        kind = EncoderDecoderConfig if self.backbone_mode == "encoder_decoder" else TransformerConfig
+        extra = {"decoder_layers": self.decoder_layers} if self.backbone_mode == "encoder_decoder" else {}
+        return kind(
             hidden_dim=self.hidden_dim, num_layers=self.num_layers,
             num_heads=self.num_heads, context_length=self.context_length,
-            alpha_init=self.alpha_init,
+            alpha_init=self.alpha_init, **extra,
         )
 
     def __post_init__(self):
         self.backbone_config()  # 复用共享组件的结构校验，不改它的公开接口。
         if type(self.use_previous_action) is not bool:
             raise ValueError("use_previous_action 必须是 bool")
-        if self.backbone_mode not in ("shared", "separate"):
-            raise ValueError("backbone_mode 只能是 shared 或 separate")
+        if type(self.xy_fourier) is not bool:
+            raise ValueError("xy_fourier 必须是 bool")
+        if self.backbone_mode not in ("shared", "separate", "encoder_decoder"):
+            raise ValueError("backbone_mode 只能是 shared、separate 或 encoder_decoder")
+        if type(self.decoder_layers) is not int or self.decoder_layers < 1:
+            raise ValueError("decoder_layers 必须是正整数")
 
     @property
     def warmup_length(self):
         # 多层注意力的感受野比单层窗口更长；额外保留一个 token 作为保守预热。
+        depth = self.num_layers + (self.decoder_layers if self.backbone_mode == "encoder_decoder" else 0)
+        return 1 + depth * (self.context_length - 1)
+
+    @property
+    def value_warmup_length(self):
         return 1 + self.num_layers * (self.context_length - 1)
 
 
