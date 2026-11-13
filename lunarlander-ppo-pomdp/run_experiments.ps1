@@ -92,13 +92,13 @@ try {
     $imageInfo = Invoke-DockerCapture -Arguments @('image', 'inspect', $image, '--format', '{{.Id}}')
     $rebuild = $imageInfo.Code -ne 0
     if (-not $rebuild) {
-        $probeCode = "import hashlib; from pathlib import Path; print(hashlib.sha256(Path('/opt/deeprl/requirements.lock').read_bytes()).hexdigest())"
+        $probeCode = "import hashlib; from pathlib import Path; print(hashlib.sha256(Path('/opt/deeprl/requirements.lock').read_bytes().replace(b'\r\n', b'\n')).hexdigest())"
         $probe = Invoke-DockerCapture -Arguments @('run', '--rm', '--entrypoint', 'python', $image, '-B', '-c', $probeCode)
         $lockHasher = [Security.Cryptography.SHA256]::Create()
-        $lockStream = [IO.File]::OpenRead((Join-Path $repoRoot 'requirements.lock'))
+        $lockContent = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes((Join-Path $repoRoot 'requirements.lock'))).Replace("`r`n", "`n")
         try {
-            $expectedHash = ([BitConverter]::ToString($lockHasher.ComputeHash($lockStream))).Replace('-', '').ToLowerInvariant()
-        } finally { $lockStream.Dispose(); $lockHasher.Dispose() }
+            $expectedHash = ([BitConverter]::ToString($lockHasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($lockContent)))).Replace('-', '').ToLowerInvariant()
+        } finally { $lockHasher.Dispose() }
         $rebuild = $probe.Code -ne 0 -or $probe.Lines[-1] -ne $expectedHash
     }
     if ($rebuild) {

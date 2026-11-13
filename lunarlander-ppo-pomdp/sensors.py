@@ -5,6 +5,8 @@ import math
 
 import numpy as np
 
+from xy_fourier import XY_FOURIER_DIM, XY_FREQUENCY_MULTIPLIERS
+
 
 SENSOR_NAMES = ("x", "y", "vx", "vy", "angle", "angular_velocity", "left_contact", "right_contact")
 FAILURE_INDICES = (2, 3, 4, 5)
@@ -14,8 +16,8 @@ OBSERVATION_DIM = 16
 MODEL_INPUT_DIM = 20
 
 
-def input_spec():
-    return {
+def input_spec(*, xy_fourier=False):
+    spec = {
         "sensor_names": list(SENSOR_NAMES),
         "failure_indices": list(FAILURE_INDICES),
         "protected_indices": list(PROTECTED_INDICES),
@@ -25,6 +27,15 @@ def input_spec():
         "availability_encoding": "1=available; 0=missing; missing_reading=0",
         "action_encoding": "one_hot_4; no_action=-1",
     }
+    if xy_fourier:
+        spec.update(input_dim=MODEL_INPUT_DIM + XY_FOURIER_DIM,
+                    layout=spec["layout"] + ",xy_fourier_x_8_y_4",
+                    xy_fourier={"version": 1, "coordinate_scaling": "identity",
+                                "amplitude": 1.0, "order": "axis_x_then_y; ascending_frequency; sin_then_cos",
+                                "angular_frequencies": {axis: [math.pi * m for m in multipliers]
+                                                        for axis, multipliers in zip(("x", "y"), XY_FREQUENCY_MULTIPLIERS)},
+                                "phase_margin_radians": math.pi / 2})
+    return spec
 
 
 @dataclass(frozen=True)

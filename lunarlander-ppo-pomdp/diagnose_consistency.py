@@ -113,7 +113,7 @@ def replay_snapshot(path, *, device="cpu", precision="fp32", compile_mode="off")
     for index, batch in enumerate(buffer.batches(config.sequence_length, config.sequences_per_minibatch,
                                                   shuffle=False)):
         features = make_model_input(batch["observations"].to(dtype), batch["previous_actions"],
-                                    config.agent.use_previous_action)
+                                    config.agent.use_previous_action, xy_fourier=config.agent.xy_fourier)
         with sdpa_kernel(SDPBackend.MATH):
             core = agent._compiled_sequence or agent._sequence_core
             logits, _ = core(features, batch["episode_starts"], batch["valid_mask"], batch["position_ids"])

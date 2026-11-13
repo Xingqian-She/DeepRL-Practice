@@ -6,6 +6,7 @@ import torch
 from buffer import RolloutBuffer
 from history import History, Token
 from sensors import SensorProcessor
+from xy_fourier import XYPhaseDiagnostics
 
 
 class Collector:
@@ -42,7 +43,7 @@ class Collector:
         """
         indices = torch.as_tensor(env_indices, dtype=torch.long, device=self.device)
         count = len(indices)
-        history = self.history.tokens
+        history = self.history.tokens[-self.agent.config.value_warmup_length:]
         obs = torch.stack([token.observations[indices] for token in history], dim=1)
         actions = torch.stack([token.previous_actions[indices] for token in history], dim=1)
         starts = torch.stack([token.episode_starts[indices] for token in history], dim=1)
@@ -52,7 +53,7 @@ class Collector:
         starts = torch.cat((starts, torch.zeros(count, 1, dtype=torch.bool, device=self.device)), dim=1)
         positions = torch.cat((positions, self.cache.next_positions[indices, None]), dim=1)
         valid = torch.ones(obs.shape[:2], dtype=torch.bool, device=self.device)
-        _, values = self.agent.forward_sequence(
+        values = self.agent.values_sequence(
             obs, actions, episode_starts=starts, valid_mask=valid, position_ids=positions,
         )
         return values[:, -1]
@@ -66,6 +67,7 @@ class Collector:
             num_steps, self.num_envs, self.device, self.history.snapshot(), self.history.capacity,
         )
         buffer.sensor_probability_start = self.failure_probability
+        phase_diagnostics = XYPhaseDiagnostics() if self.agent.config.xy_fourier else None
         for t in range(num_steps):
             positions = torch.where(self.episode_starts, 0, self.cache.next_positions).clone()
             token = Token(self.observations, self.previous_actions, self.episode_starts, positions)
@@ -79,6 +81,8 @@ class Collector:
                 buffer.next_values[t - 1, continuing] = values[continuing]
             self.history.append(token)
             next_obs, rewards, terminated, truncated, infos = self.envs.step(actions.cpu().numpy())
+            if phase_diagnostics is not None:
+                phase_diagnostics.vector_step(self.raw_observations, next_obs, terminated | truncated, infos)
             term = torch.as_tensor(terminated, dtype=torch.bool, device=self.device)
             trunc = torch.as_tensor(truncated, dtype=torch.bool, device=self.device)
             buffer.add(token, actions, log_probs, values,
@@ -118,6 +122,8 @@ class Collector:
                 self.observations[indices], self.previous_actions[indices], indices,
             )
         buffer.sensor_probability_end = self.failure_probability
+        if phase_diagnostics is not None:
+            buffer.xy_phase_metrics = phase_diagnostics.metrics()
         return buffer
 
     def invalidate_cache(self):

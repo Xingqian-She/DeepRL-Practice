@@ -1,3 +1,35 @@
+# 2026-11-10 Encoder–Decoder 实施验证
+
+已实现通用 `EncoderDecoderConfig`、`EncoderDecoderBackbone`、`EncoderDecoderCache`，接通共享/独立/Encoder–Decoder Agent、只计算价值的 bootstrap、策略副本、诊断和独立实验入口。**本次只执行单元测试与短程烟测，未启动正式六种子长跑，也没有新的着陆收敛结论。**
+
+验收环境为现有 `deeprl-practice:py311-cu128` Linux 镜像：Python 3.11.14、PyTorch 2.9.1+cu128、Gymnasium 1.2.2、NumPy 2.4.6、box2d-py 2.3.5，RTX 4090 Laptop GPU。正式数值路径维持 FP32/math SDPA、TF32/AMP 关闭；融合 SDPA 单独强制后端验证。
+
+| 检查 | 实际结果 | 证据 |
+|---|---|---|
+| 共享组件完整回归 | **32 项通过，无失败、无跳过**，71.870 秒 | [shared-tests.log](runs/encoder-decoder-validation-v1/shared-tests.log) |
+| 项目完整回归 | **104 项通过，无失败、无跳过**，292.886 秒，含旧模式及新模式真实编译/训练/评估 | [project-tests.log](runs/encoder-decoder-validation-v1/project-tests.log) |
+| 依赖锁修复后的相关复验 | 新模式 9 项、通用调度 16 项、Stage2 18 项，**43 项全部通过**；新增检查 LF/CRLF 等价、版本变化拒绝 | [orchestration-regression.log](runs/encoder-decoder-validation-v1/orchestration-regression.log) |
+| 独立 Windows DryRun | 正确预览 **6 次训练、36 次最终评估**，未创建正式训练批次 | [entrypoint-dry-run.log](runs/encoder-decoder-validation-v1/entrypoint-dry-run.log) |
+| 独立 Windows CPU 烟测 | **42/42 completed**，6 次各 64 环境步、36 次各 2 回合评估，14 个统计组全部有效 | [概况](runs/experiments/encoder-decoder-validation-smoke-v1/summary/overview.md)、[入口日志](runs/encoder-decoder-validation-v1/entrypoint-smoke.log) |
+| 同批次再次执行 | **42/42 跳过**；attempt、run_id 与登记哈希不变 | [entrypoint-repeat.log](runs/encoder-decoder-validation-v1/entrypoint-repeat.log) |
+| AnalyzeOnly / Status | 两种模式均成功，不创建新的训练或评估任务 | [分析日志](runs/encoder-decoder-validation-v1/entrypoint-analyze.log)、[状态日志](runs/encoder-decoder-validation-v1/entrypoint-status.log) |
+| CUDA 生产形状 | D256、4+4 层、4 heads、窗口 32，**4096 环境步、2 次 PPO 更新**，真实 Inductor 开启；采集到最长 **313-token** 训练序列 | [verification.json](runs/encoder-decoder-validation-v1/cuda-production/verification.json)、[cuda-shape.log](runs/encoder-decoder-validation-v1/cuda-shape.log) |
+| 产物与配方核验 | **150 项登记产物哈希匹配**；FO04 训练超参数吻合；新烟测、CUDA 验证与当前源码指纹一致 | [final-checks.json](runs/encoder-decoder-validation-v1/final-checks.json)、[核验脚本](runs/encoder-decoder-validation-v1/final_audit.py) |
+
+新增测试覆盖三类注意力的因果/窗口/episode 隔离、当前 H 可读、padding 输入为 NaN、原始输入感受野边界、不同堆栈深度、环形回绕、异步连续 reset、稳定存储地址、每层每步只投影新 H、两路并行/单步特征、历史梯度与价值分支隔离。单步当前梯度支持缓存继续覆盖/reset 后延迟 backward，历史缓存不保留跨时间计算图。CUDA 共享测试强制 `EFFICIENT_ATTENTION`，比较前向、反向与缓存结果，并检查 BF16/FP16 autocast。
+
+PPO 集成测试包括两次真实更新和新参数缓存重建、FP64 现场重放、bootstrap 不运行 Actor/Decoder 且不修改缓存、策略副本缓存等价、v2 checkpoint 与缺失新增配置字段的兼容。项目全量回归还覆盖原 shared/separate 模式、旧课程、调度、损坏/中断恢复、RNG 隔离、真实 Box2D 和视频链路。
+
+生产形状下更新前最大 log-prob 误差为 **2.384185791015625e-7**，低于保留的警告阈值 1e-4 和失败阈值 5e-4。Encoder 投影、Encoder 堆栈、Decoder 投影、Decoder 堆栈、交叉注意力、Actor、Critic 均有参数变化；采样、历史重放和 PPO 序列路径均实际启用 Inductor。另完成 sample/p=1 与 argmax/p=.5 各 3 回合的独立评估。上述短程结果只作实现证据。
+
+实际默认模型共 **7,489,305** 个参数，其中策略路径 7,489,048、价值路径 3,218,953、共享 3,218,696；8 环境环形 KV 与元数据占 **6,291,840 字节**。价值/策略保守预热分别为 125/249。独立 CPU 烟测使用 D32、2+2 层、窗口 4、2 环境、16 步 rollout、19 步回合上限，使更新边界有连续历史并触发时间截断；PO03 的最终 p=0、p=1 训练步数为 0，未将预算完成误报为最终任务完成。
+
+入口验收发现工作区 `requirements.lock` 经 Git 的 Windows CRLF 转换后，与镜像中的 LF 文件产生不同原始哈希，内容完全相同。PowerShell 和容器预检现统一 LF 后比较，依赖版本等内容变化仍拒绝；未改动依赖锁或安装版本。宿主机 Box2D 扩展无法加载，因此正式验收以以上锁定 Linux 环境为准。
+
+本次训练源码指纹为 `a239ed63f7f91c04351310302d347b4342cb82ef21d4affc081db4cd481bba3e`。历史 FO04 配方及 PO01/PO03 报告保持独立来源；本次实验不要求旧批次接受修改后的源码指纹。正式入口与复现步骤见 [README](README.md#encoderdecoder-独立探索实验) 和 [EXPERIMENTS.md](EXPERIMENTS.md#6-encoderdecoder-探索实验)。
+
+---
+
 # 2026-11-06 实施验证
 
 本页只记录本次实际完成的实现测试、短程运行和性能基准。**未启动 FO/PO 正式长训练，没有新的着陆收敛结论。** 实验执行手册见 [EXPERIMENTS.md](EXPERIMENTS.md)。
@@ -124,3 +156,25 @@ python -B benchmark_evaluation.py --device cuda --episodes 20 100 --repeats 3 --
 验收中修复了旧 PowerShell 启动器在容器已存在分支中 `String.Split` 的重载歧义，显式使用字符数组分隔符。修复后使用新的 `*-validation-v2` 批次重新完成 CPU/GPU 全链路，未改写旧验收批次的来源指纹。
 
 验收结束后，专用测试容器均已退出，无遗留训练或评估进程。第一阶段训练源码指纹保持 `47786bd7215381980b7c74452a38ab74173a1fa3ed34b188166ef49ad271f179`；协调代码指纹单独保存在各第二阶段快照及最终核验 JSON 中。
+
+## 固定 XY Fourier 实验验收（2026-11-12）
+
+只实施编码与独立实验入口；未启动正式 `xy-fourier-10m-v1` 长训练。
+设计、频率边界和日志字段见 [XY 实验设计](reports/XY-PO01-PO03-design.md)。
+
+| 检查 | 结果 | 证据 |
+|---|---|---|
+| 完整 CPU 回归 | 112 项：107 通过、5 项需 GPU 的测试跳过，0 失败；168.408 秒 | [日志](runs/xy-fourier-validation/cpu-regression.log)、[JSON](runs/xy-fourier-validation/cpu-regression.json) |
+| XY 专项 | 7 项通过：特征顺序/梯度、阈值统计、跨 rollout/终止观测、缓存/策略快照、bootstrap、新旧 checkpoint、实验参数与历史来源校验 | `tests/test_xy_fourier.py`，包含于完整回归 |
+| 两组真实 Box2D CPU PPO | 每组 64 步、两次更新及 sample/argmax 评估通过；输入 32 维，相位转移数完整 | [CPU verification](runs/xy-fourier-validation/cpu-v1/verification.json) |
+| 两组 CUDA 正式网络形状 PPO | 每组 4096 步、D256/L4/H4/context32、独立骨干、6,444,821 参数；Inductor 三条路径启用，训练序列长 189 | [CUDA verification](runs/xy-fourier-validation/cuda-production-v1/verification.json) |
+| CUDA 数值核对 | 两组最大 log-prob 差均为 2.384185791015625e-7，低于 5e-4；sample/argmax 独立评估均通过 | 同上及各组 training.csv/evaluation.json |
+| PowerShell 正式预览 | `run_xy_fourier.ps1 -DryRun` 成功：XY_PO01/XY_PO03，6 次训练＋36 次评估；未创建正式批次 | 已实测；任务合同亦由专项测试核对 |
+| PowerShell 全队列烟测 | `-Smoke -Device cpu`：42/42 completed，全部只有 attempt 1；每条训练/评估的 32 维布局与相位计数核对通过 | [队列概况](runs/experiments/xy-fourier-entrypoint-smoke-v1/summary/overview.md)、[核对 JSON](runs/xy-fourier-validation/entrypoint-audit.json) |
+| 独立压力校准 | 三种策略各 256 种子，共 123,942 转移；最大位移与设计数值一致 | [校准 JSON](reports/xy-fourier-design/calibration.json)、[复现脚本](reports/scripts/calibrate_xy_fourier.py) |
+| 真实历史参考预检 | 六份 PO01/PO03 训练配置与元数据通过，只存在预期编码/默认字段差异；新旧源码分别保留 | [预检 JSON](runs/xy-fourier-validation/formal-preview/summary/xy-comparison.json) |
+
+CPU 回归曾在源码更新期间触发旧调度器的源码变化保护；冻结源码后的完整复跑无失败。
+最终 CUDA 验收源码指纹为 `86cdc5e7e71b5a4cfc65370eb5304a76f96758cee039101c8f8d5c0ab2651fb5`；
+验证时已确认与当前训练源码一致。CPU 小模型烟测早于历史对照校验的最后补充，其产物保留当时的来源指纹。
+短程结果只说明工程链路可运行，不判断新编码能否提高长期着陆成绩。

@@ -51,6 +51,11 @@ def file_hash(path):
         return hashlib.file_digest(file, "sha256").hexdigest()
 
 
+def dependency_lock_hash(path):
+    """Preserve exact lock content while tolerating Git's Windows CRLF checkout."""
+    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def write_json(path, value):
     path = Path(path)
     temporary = path.with_suffix(".tmp")
@@ -117,6 +122,9 @@ def build_plan(config_path, groups=None, *, smoke=False, device=None):
 
     def normalized(parameters, seed):
         parameters = merge(parameters, overrides)
+        if smoke and parameters.get("agent", {}).get("backbone_mode") == "encoder_decoder":
+            parameters["agent"]["decoder_layers"] = 2
+            parameters["max_episode_steps"] = 19
         if "seed" in parameters:
             raise ValueError("请在顶层 seeds 配置种子，不要在 training 内配置 seed")
         agent, sensors = parameters.pop("agent", {}), parameters.pop("sensors", {})
@@ -158,7 +166,7 @@ def preflight(plan):
     if (sys.version_info.major, sys.version_info.minor) != (3, 11):
         raise RuntimeError("项目锁定 Python 3.11，请更新项目镜像")
     installed_lock = Path("/opt/deeprl/requirements.lock")
-    if not installed_lock.is_file() or file_hash(installed_lock) != file_hash(REPOSITORY / "requirements.lock"):
+    if not installed_lock.is_file() or dependency_lock_hash(installed_lock) != dependency_lock_hash(REPOSITORY / "requirements.lock"):
         raise RuntimeError("镜像依赖锁与仓库不一致，请通过 PowerShell 入口重建镜像")
     subprocess.run([sys.executable, "-m", "pip", "check"], check=True)
     devices = {str(configure_runtime(task["seed"], task["parameters"]["device"]))
@@ -176,7 +184,7 @@ def preflight(plan):
               "dependencies": {name: dependency_version(name) for name in ("torch", "gymnasium", "numpy", "box2d-py")},
               "hardware": {"torch": str(torch.__version__), "cuda": torch.version.cuda,
                            "device_name": torch.cuda.get_device_name() if device == "cuda" else "cpu"},
-              "requirements_sha256": file_hash(installed_lock), "evaluation_protocol": EVALUATION_PROTOCOL}
+              "requirements_sha256": dependency_lock_hash(installed_lock), "evaluation_protocol": EVALUATION_PROTOCOL}
     print(f"环境就绪：Python {result['python']} | {device} | {result['hardware']['device_name']}", flush=True)
     return result
 
@@ -461,9 +469,10 @@ def command_for(root, state, spec, run):
 
 
 def report(root, state):
+    from curriculum import curriculum_record
     from summarize_experiments import summarize, write_csv
 
-    directories, issues, rows = [], {}, []
+    directories, issues, rows, curricula = [], {}, [], []
     for key, task in state["tasks"].items():
         attempt = current_attempt(task)
         metadata, run = {}, None
@@ -478,6 +487,8 @@ def report(root, state):
                 pass
         if not isinstance(metadata, dict):
             metadata = {}
+        if metadata.get("kind") == "train":
+            curricula.append(curriculum_record(run, metadata))
         elapsed = metadata.get("elapsed_seconds")
         if type(elapsed) not in (int, float) or not math.isfinite(elapsed):
             elapsed = None
@@ -492,12 +503,25 @@ def report(root, state):
     counts = Counter(task["status"] for task in state["tasks"].values())
     output = root / "summary"
     write_csv(output / "tasks.csv", rows)
+    write_csv(output / "curriculum.csv", curricula)
     write_json(output / "status.json", {"batch": state["batch"], "updated_at": now(), "counts": dict(counts), "tasks": rows})
     lines = ["# 实验运行概况", "", f"批次：`{state['batch']}`；已完成 {counts['completed']}/{len(rows)} 个任务。",
              "", "运行完成表示预算和产物完整，不表示已学会着陆。跨种子标准差采用样本标准差；留出回合不是独立训练种子。",
              "", "本入口不自动冻结课程配置；selection.json 只描述当前已登记实验组，不代表已完成手册的七组对照。"]
     if state["contract"]["smoke"]:
         lines += ["", "**这是短程烟测，成绩不用于判断标准任务是否达标。**"]
+    if state["contract"]["training_defaults"]["agent"].get("xy_fourier"):
+        lines += ["", "**固定 XY Fourier 实验：x 四档、y 两档，输入 32 维。相位统计只记录，不调整频率。**"]
+        if not state["contract"]["smoke"]:
+            from xy_fourier_comparison import write_comparison
+            write_comparison(root, state)
+            lines += ["", "历史 PO01/PO03 参考与源码差异见 [xy-comparison.md](xy-comparison.md)。"]
+    if state["contract"]["training_defaults"]["agent"]["backbone_mode"] == "encoder_decoder":
+        lines += ["", "**Encoder–Decoder 探索实验：以最终统一条件评估为主要依据；"
+                  "容量、感受野和共享梯度均有变化，结果不能单独归因于交叉注意力。**",
+                  "", "PO03 的最终难度预算、进入时学习率和课程轨迹见 [curriculum.csv](curriculum.csv)。",
+                  "历史 PO01/PO03 仅作独立参考，保留原来源：[第二阶段报告](../../../../reports/PO01-PO03-stage2-analysis.md)。"
+                  "评估 seed=20000 已用于历史分析，本轮为探索性比较。"]
     lines += ["", "成绩及达标比例见 [summary.md](summary.md)，逐种子数据见 [runs.csv](runs.csv)，跨种子统计见 [groups.csv](groups.csv)。",
               "", "| 任务 | 状态 | attempt | 实际步数 | 耗时（秒） | 说明 |", "|---|---|---:|---:|---:|---|"]
     for row in rows:

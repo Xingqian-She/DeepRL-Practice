@@ -1,0 +1,7 @@
+scope,group,records,xy_phase_transitions,xy_phase_skipped_terminal_transitions,xy_x_phase_step_max_over_pi,xy_x_phase_ge_half_pi_count,xy_x_phase_ge_pi_count,xy_y_phase_step_max_over_pi,xy_y_phase_ge_half_pi_count,xy_y_phase_ge_pi_count
+heldout,XY_PO01,18,308897,0,0.409816265106,0,0,0.120409868658,0,0
+heldout,XY_PO03,18,395480,0,0.228930473328,0,0,0.0622870624065,0,0
+periodic,XY_PO01,3,570052,0,0.310688972473,0,0,0.0818049423397,0,0
+periodic,XY_PO03,3,686056,0,0.237992286682,0,0,0.0871587768197,0,0
+training,XY_PO01,3,29995008,0,0.406280994415,0,0,0.167371854186,0,0
+training,XY_PO03,3,29995008,0,0.287125110626,0,0,0.11126511544,0,0

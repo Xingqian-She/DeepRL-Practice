@@ -1,6 +1,6 @@
 # LunarLander PPO-POMDP
 
-用 PPO + GAE 和时序 Transformer，研究策略如何适应传感器独立失灵。共享/独立策略价值骨干、学习率衰减、优势标准化、价值裁剪和熵系数调度均可对照。周期评估使用策略专用副本与批量推理，默认 8 个环境、20 回合。
+用 PPO + GAE 和时序 Transformer，研究策略如何适应传感器独立失灵。支持共享、独立和因果 Encoder–Decoder 策略价值骨干，学习率衰减、优势标准化、价值裁剪和熵系数调度均可对照。周期评估使用策略专用副本与批量推理，默认 8 个环境、20 回合。
 
 **第一阶段 FO01–FO07 已完成，按既定规则选择 FO04。** 该配置采用独立 Actor/Critic 骨干与线性学习率；各组成绩、训练稳定性和传感器缺失泛化结果见[第一阶段报告](reports/FO01-FO07-stage1-analysis.md)。
 
@@ -118,6 +118,35 @@ Ctrl+C、关闭窗口、失败停止、完整产物跳过和 attempt 补跑沿�
 
 第二阶段不接受 `-Config`，参数来自校验后的 FO04。容器内可在本项目目录执行 `python -B -m stage2 --dry-run`；训练源码指纹规则保持原样，第二阶段包与 PowerShell 入口单独记录协调代码指纹。
 
+## Encoder–Decoder 独立探索实验
+
+从仓库根目录的 Windows PowerShell 执行：
+
+```powershell
+# 预览：6 次训练 + 36 项最终权重评估，不启动正式训练
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_encoder_decoder.ps1 -DryRun
+
+# 小模型、每次 64 环境步、2 次 PPO 更新、每项 2 回合评估
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_encoder_decoder.ps1 -Smoke
+
+# 手动启动正式探索实验：每个训练种子请求 1000 万步
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_encoder_decoder.ps1
+```
+
+默认正式批次为 `encoder-decoder-10m-v1`，烟测批次为 `encoder-decoder-smoke-v1`；支持 `-Groups ED_PO01,ED_PO03`、`-Batch`、`-Status`、`-AnalyzeOnly`、`-Device`，沿用统一入口的中断、失败停止和完整任务跳过机制。配置为 [encoder_decoder_experiments.json](encoder_decoder_experiments.json)。容器内对应 `python -B run_experiments.py --config encoder_decoder_experiments.json --batch encoder-decoder-10m-v1`，需要烟测时显式追加 `--smoke` 并换烟测批次名。
+
+新训练从随机初始化开始，保留冻结 FO04 的训练超参数与 FP32/math SDPA、TF32/AMP 关闭的口径；模型改为 D256、Encoder 4 层、Decoder 4 层、4 heads、窗口 32。`ED_PO01` 直接 p=1，`ED_PO03` 使用原成绩课程；各 seed=42/43/44，实际各 9,998,336 环境步。最终 `latest.pt` 按 p=0/.5/1 × sample/argmax、seed=20000、8 环境、100 回合评估。seed=20000 已用于历史分析，这是一轮探索性比较。
+
+两套独立的 20→D `Linear → Tanh` 投影分别输入 Encoder 和 Decoder。Critic 读取 Encoder 的 `H`；每个 Decoder 层依次执行因果自注意力、以 `H` 为 memory 的因果交叉注意力、FFN，Actor 读取 Decoder 输出。交叉读取 `H_t` 合法，训练时保留策略损失回传 Encoder 的计算图。`--num-layers` 控制 Encoder，`--decoder-layers` 控制 Decoder，后者默认 4。
+
+两路最大原始输入感受野分别为 125 和 249，PPO 保守预热前缀为 249，完整学习序列最长 313。预热排除直接损失但保留梯度。三组 KV 共用环形时钟与异步 reset，更新后用实际传感器输入重放重建；bootstrap 只运行价值所需的 Encoder。评估副本保留两套投影、Encoder、Decoder 和 Actor。
+
+`diagnostics.csv` 增加 Encoder 两种目标的梯度范数、交叉注意力策略梯度和交叉残差门控范围；它们来自固定批次探针。`training.csv` 记录缓存字节数，`metadata.json` 记录参数与预热长度。`summary/curriculum.csv` 汇总最终 p、阶段步数、转换、首次 p=1 训练位置与学习率、p=1 完整 rollout 步数以及成本。最后一次评估才进入 p=1 时，进入最终阶段与实际在该阶段训练的步数分别报告。
+
+**对比范围：**容量、策略感受野、价值/策略梯度共享均发生变化，成绩只能用于评估整套架构是否值得继续研究；Decoder 自身也有历史通路，梯度连通不等于已经有效使用 Encoder memory。原 PO01/PO03 的[报告](reports/PO01-PO03-stage2-analysis.md)保留为独立历史参考，新旧结果按各自来源解释。修改后的源码使用新批次，原 Stage2 的同源码参考校验继续有效。
+
+烟测为 D32、2+2 层、窗口 4，回合上限 19，使轨迹跨过 16 步 rollout 更新边界并触发截断；只验证工程链路。生产形状 CUDA 验证及原始日志见 [VALIDATION.md](VALIDATION.md)。
+
 ## 单次训练与评估接口
 
 在已安装项目依赖的 Linux 容器中，从本项目目录执行：
@@ -163,7 +192,7 @@ Transformer 读取观测和动作历史。rollout 与历史保存实际看到的
 
 | 参数 | 默认值 | 对照含义 |
 |---|---|---|
-| `--backbone-mode` | `shared` | `separate` 为策略和价值各建 Encoder/Transformer |
+| `--backbone-mode` | `shared` | `separate` 为独立骨干；`encoder_decoder` 为两路投影、价值 Encoder、策略 Decoder |
 | `--learning-rate` | `3e-4` | 初始 Adam 学习率 |
 | `--lr-schedule` | `constant` | `linear` 线性插值到 `--learning-rate-final`，默认终值 0 |
 | `--normalize-advantage` | 开启 | `--no-normalize-advantage` 使用原始 GAE 优势 |
@@ -237,3 +266,17 @@ CLI 默认仍为 argmax、p=1；评估全观测任务须显式指定 `--sensor-f
 `latest.pt` 是权重与配置快照，不包含恢复完整训练所需的优化器和环境状态。5000 万步实验从头训练。运行输出统一放在 Git 忽略的 `runs/`，不自动备份或归档。
 
 参考：[Gymnasium LunarLander](https://gymnasium.farama.org/environments/box2d/lunar_lander/)、[PPO](https://arxiv.org/abs/1707.06347)、[PPO 实现细节](https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/)、[共享 Transformer](../shared/README.md)。
+
+## Stage2：固定 XY Fourier 实验
+
+保留原有 20 维输入，追加 x 四档、y 两档确定性 sin/cos，共 32 维；默认关闭，独立运行 `XY_PO01/XY_PO03` 各三个种子。
+频率依据、相位监测及历史对照边界见 [实验设计](reports/XY-PO01-PO03-design.md)。
+在仓库根目录 PowerShell 一键启动（正式批次 `xy-fourier-10m-v1`，6 次训练＋36 次留出评估）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_xy_fourier.ps1
+```
+
+附加 `-DryRun` 查看任务，`-Smoke` 跑独立短程烟测，`-Status` 查进度；Ctrl+C 后原命令可补跑。
+结果位于 `runs/experiments/xy-fourier-10m-v1/summary/overview.md`，历史对照见同目录的 `xy-comparison.md`。
+直接训练也可使用 `train.py --backbone-mode separate --xy-fourier`；评估自动读取 checkpoint 中的编码配置。

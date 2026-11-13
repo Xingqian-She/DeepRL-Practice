@@ -9,9 +9,10 @@ from torch import nn
 from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from envs import make_env
-from model import make_model_input
+from model import make_model_input, policy_features, policy_module_names
 from runtime import EVALUATION_PROTOCOL, preserve_rng_state
 from sensors import OBSERVATION_DIM, SENSOR_NAMES, SensorProcessor, validate_probability
+from xy_fourier import XYPhaseDiagnostics
 
 
 class PolicySnapshot(nn.Module):
@@ -19,21 +20,20 @@ class PolicySnapshot(nn.Module):
     def __init__(self, agent):
         super().__init__()
         self.config = agent.config
-        self.encoder = deepcopy(agent.encoder)
-        self.backbone = deepcopy(agent.backbone)
-        self.actor = deepcopy(agent.actor)
+        for name in policy_module_names(self.config):
+            setattr(self, name, deepcopy(getattr(agent, name)))
         self.eval()
 
     def sync(self, agent):
         if self.config != agent.config:
             raise ValueError("评估器只能复用相同结构的模型")
-        for name in ("encoder", "backbone", "actor"):
+        for name in policy_module_names(self.config):
             getattr(self, name).load_state_dict(getattr(agent, name).state_dict(), strict=True)
 
     @torch.no_grad()
     def step(self, features, cache, starts):
         with sdpa_kernel(SDPBackend.MATH):
-            hidden = self.backbone.step(self.encoder(features).unsqueeze(1), cache, episode_starts=starts)
+            hidden, _ = policy_features(self, features, cache=cache, episode_starts=starts)
             return self.actor(hidden[:, 0])
 
 
@@ -122,6 +122,7 @@ class EvaluationRunner:
                 next_episode = 0
                 results = []
                 entropy_sum, main_sum = 0.0, 0.0
+                phase_diagnostics = XYPhaseDiagnostics() if self.policy.config.xy_fourier else None
 
                 def assign(slot):
                     nonlocal next_episode
@@ -148,7 +149,8 @@ class EvaluationRunner:
                 while len(results) < episodes:
                     # Validate/encode on CPU, then one H2D observation and one D2H probability batch.
                     features = make_model_input(torch.from_numpy(observations), torch.from_numpy(previous),
-                                                self.policy.config.use_previous_action).to(self.device)
+                                                self.policy.config.use_previous_action,
+                                                xy_fourier=self.policy.config.xy_fourier).to(self.device)
                     logits = self.policy.step(features, cache, torch.from_numpy(starts).to(self.device))
                     probabilities = logits.softmax(-1).cpu().numpy().astype(np.float64)
                     if not np.isfinite(probabilities).all() or (probabilities.sum(axis=-1) <= 0).any():
@@ -168,6 +170,9 @@ class EvaluationRunner:
                         entropy_sum -= float((probs[nonzero] * np.log(probs[nonzero])).sum())
                         main_sum += float(probs[2])
                         raw, reward, terminated, truncated, _ = self.envs[slot].step(action)
+                        if phase_diagnostics is not None:
+                            # These environments reset explicitly, so raw is the true final state too.
+                            phase_diagnostics.update(observations[slot], raw)
                         state["return"] += float(reward)
                         state["length"] += 1
                         state["counts"][action] += 1
@@ -188,6 +193,8 @@ class EvaluationRunner:
                             previous[slot], starts[slot] = action, False
                 results.sort(key=lambda row: row["episode"])
                 summary = summarize_episodes(results, sensor_failure_probability, policy, entropy_sum, main_sum)
+                if phase_diagnostics is not None:
+                    summary.update(phase_diagnostics.metrics())
                 elapsed = time.perf_counter() - started
                 steps = sum(row["length"] for row in results)
                 self.last_performance = {"evaluation_seconds": elapsed, "evaluation_environment_steps": steps,

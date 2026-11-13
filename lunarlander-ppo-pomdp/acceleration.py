@@ -42,7 +42,8 @@ def _sequence_inputs(config, batch_size, length, device):
                                 dtype=torch.float32).reshape(batch_size, length, OBSERVATION_DIM).sin()
     previous = torch.zeros(batch_size, length, dtype=torch.long, device=device)
     previous[:, 0] = -1
-    features = make_model_input(observations, previous, config.agent.use_previous_action)
+    features = make_model_input(observations, previous, config.agent.use_previous_action,
+                                xy_fourier=config.agent.xy_fourier)
     starts = torch.zeros(batch_size, length, dtype=torch.bool, device=device)
     starts[:, 0] = True
     if length > 2:

@@ -48,7 +48,8 @@ def run_evaluation(checkpoint, *, episodes=10, seed=10000, device="auto", mode="
                   "training_use_previous_action": saved["agent_config"]["use_previous_action"],
                   "effective_use_previous_action": agent.config.use_previous_action,
                   "sensor_failure_probability": sensor_failure_probability,
-                  "training_sensors": saved["train_config"]["sensors"], "input_spec": input_spec()}
+                  "training_sensors": saved["train_config"]["sensors"],
+                  "input_spec": input_spec(xy_fourier=agent.config.xy_fourier)}
     parameters.update(training_seed=saved["train_config"]["seed"], training_parameters=saved["train_config"],
                       checkpoint_name=Path(checkpoint).name)
     run = Run("evaluate", parameters, device, output_dir, run_dir=run_dir, experiment_id=experiment_id)

@@ -309,3 +309,47 @@ python -B benchmark_evaluation.py --device cuda --episodes 20 100 --repeats 3 --
 在容器中临时查看新数据可运行 `tensorboard --logdir runs --host 0.0.0.0 --port 6006`；外部浏览器访问需已映射端口。仓库自带 TensorBoard 服务的启动方式见根 README。
 
 所有运行都在忽略目录 `runs/` 下。`latest.pt` 周期覆盖，最佳/转换权重按阶段保存，不再备份整棵 runs。`diagnostics.csv` 只保存标量，完整现场仅首次警告/失败各一份。结束后先用汇总检查状态和目录，再手动删除明确不需要的整个批次；不要把归档复制当作默认步骤。
+
+## 6. Encoder–Decoder 探索实验
+
+独立配置为 `encoder_decoder_experiments.json`，Windows 入口为 `run_encoder_decoder.ps1`，完整参数见 [README](README.md#encoderdecoder-独立探索实验)。在仓库根目录先执行带 `-DryRun` 的入口可预览正式任务；`-Smoke` 在独立批次运行短程链路。去掉这两个参数才会启动正式探索实验，代码验收不自动执行该长跑。
+
+| 实验组 | 模型 | 观测方案 | 训练种子 / 请求预算 |
+|---|---|---|---|
+| ED_PO01 | D256 / Encoder 4 层 / Decoder 4 层 / W32 | 直接 p=1 | 42、43、44，各 1000 万步 |
+| ED_PO03 | 同上 | 成绩课程，p 步长 .1、门槛 200/80%、连续两次达标 | 同上 |
+
+其余训练超参数与冻结 FO04 相同，实际每个种子完成 9,998,336 步。默认 6 次新训练、36 项新评估，评估最终 `latest.pt`，p=0/.5/1 × sample/argmax、100 回合、8 环境、seed=20000。保留原 PO01/PO03 的独立历史报告作参考；三个训练种子、已经使用过的评估种子集只支持探索性结论。
+
+Encoder 与 Decoder 各用独立输入投影，价值头读取 H，Actor 经可微交叉注意力读取历史。相对 FO04，参数量、策略感受野与共享梯度均改变，因此不把成绩变化单独解释为 Cross-Attention 的效果。单层窗口为 32，价值、策略最长原始输入感受野为 125/249；学习序列 64 加保守预热前缀 249，最长输入为 313 token。正式实验保持 FP32/math SDPA 和现有 compile auto 口径，融合后端只在独立验证中检查。
+
+先看 `summary/overview.md` 与最终统一条件成绩；`summary/curriculum.csv` 另存最终概率、阶段步数、是否进入 p=1、p=1 完整 rollout 的训练步数、首次实际训练起始位置及当时学习率。共享梯度夹角、Encoder 目标梯度、交叉注意力梯度和门控来自固定诊断批次，应结合运行成本与各训练种子分别解释。
+
+例如在容器的本项目目录中手动启动新批次：
+
+```bash
+python -B run_experiments.py --config encoder_decoder_experiments.json \
+  --batch encoder-decoder-10m-v1
+```
+
+生产形状的短程编译验收可单独复现，每次使用尚不存在的输出目录，仅运行 4096 环境步及少量评估：
+
+```bash
+python -B tests/smoke_encoder_decoder_cuda.py \
+  --output-dir runs/encoder-decoder-cuda-shape-v2
+```
+
+## 固定 XY Fourier 输入实验
+
+`xy_fourier_experiments.json` 从冻结 Stage2 的 FO04 配方复制；只启用 XY 编码，仍为独立 Actor/Critic。
+`XY_PO01` 直接 p=1，`XY_PO03` 使用原成绩课程；种子 42/43/44，正式批次 `xy-fourier-10m-v1`。
+x 的角频率为 π、2π、4π、8π，y 为 π、2π，保留原始 20 维后追加 12 维。
+频段依据、适用边界、日志字段和复现方法见 [XY 实验设计](reports/XY-PO01-PO03-design.md)。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_xy_fourier.ps1
+```
+
+入口支持 `-Smoke`、`-DryRun`、`-Status`、`-AnalyzeOnly`、`-Groups` 和 `-Batch`。
+正式队列共 6 次训练、36 次统一留出评估；历史 PO01/PO03 按各自来源校验，
+仅作为探索性参考，见新批次 `summary/xy-comparison.md`。不重训基线，也不修改旧批次。

@@ -10,6 +10,22 @@ from .normalization import RMSNorm
 from .position import RotaryEmbedding, apply_rotary
 
 
+def cached_attention(attention, q, k, v, key_store, value_store, indices, allowed, enable_grad):
+    """Append current KV once; differentiable calls snapshot mutable history."""
+    if enable_grad:
+        keys = key_store.detach().scatter(2, indices, k)
+        values = value_store.detach().scatter(2, indices, v)
+    else:
+        keys = key_store.scatter_(2, indices, k)
+        values = value_store.scatter_(2, indices, v)
+    result = attention.attend(q, keys, values, allowed, False)
+    if enable_grad:
+        with torch.no_grad():
+            key_store.scatter_(2, indices, k.detach())
+            value_store.scatter_(2, indices, v.detach())
+    return result
+
+
 class Attention(nn.Module):
     def __init__(self, config: TransformerConfig) -> None:
         super().__init__()
@@ -168,9 +184,12 @@ class TransformerBackbone(nn.Module):
         positions, mask, native_causal = self._sequence_metadata(
             x, episode_starts, valid_mask, position_ids, attn_mask, is_causal
         )
+        cos, sin = self.rope(positions)
+        return self._forward_with_metadata(x, cos, sin, mask, native_causal, valid_mask)
+
+    def _forward_with_metadata(self, x, cos, sin, mask, native_causal, valid_mask):
         if valid_mask is not None:
             x = x.masked_fill(~valid_mask.unsqueeze(-1), 0)
-        cos, sin = self.rope(positions)
         for block in self.blocks:
             x = block(x, cos, sin, mask, native_causal)
         x = self.output_norm(x)
@@ -201,30 +220,16 @@ class TransformerBackbone(nn.Module):
             cache.validate_mask(episode_starts)
 
         with torch.set_grad_enabled(enable_grad):
-            if episode_starts is not None:
-                cache.reset(episode_starts)
-            positions = cache.next_positions.clone().unsqueeze(1)
+            positions, indices, lengths, allowed = cache._prepare_step(episode_starts)
             cos, sin = self.rope(positions)
-            indices = positions.remainder(self.config.context_length).view(x.shape[0], 1, 1, 1)
-            indices = indices.expand(-1, self.config.num_heads, 1, self.config.head_dim)
-            lengths = (cache.lengths + 1).clamp(max=self.config.context_length)
-            allowed = (cache.slot_indices[None, :] < lengths[:, None])[:, None, None, :]
-            for layer, block in enumerate(self.blocks):
-                q, k, v = block.attention.project(block.attn_norm(x), cos, sin)
-                if enable_grad:
-                    # Out-of-place scatter snapshots history AND connects current
-                    # K/V. Neither saved tensor aliases mutable persistent storage.
-                    keys = cache.keys[layer].detach().scatter(2, indices, k)
-                    values = cache.values[layer].detach().scatter(2, indices, v)
-                else:
-                    keys = cache.keys[layer].scatter_(2, indices, k)
-                    values = cache.values[layer].scatter_(2, indices, v)
-                x = block.finish(x, block.attention.attend(q, keys, values, allowed, False))
-                if enable_grad:
-                    with torch.no_grad():
-                        cache.keys[layer].scatter_(2, indices, k.detach())
-                        cache.values[layer].scatter_(2, indices, v.detach())
-            with torch.no_grad():
-                cache.next_positions.add_(1)
-                cache.lengths.copy_(lengths)
-            return self.output_norm(x)
+            x = self._step_with_metadata(x, cache.keys, cache.values, cos, sin, indices, allowed, enable_grad)
+            cache._advance(lengths)
+            return x
+
+    def _step_with_metadata(self, x, keys, values, cos, sin, indices, allowed, enable_grad):
+        for layer, block in enumerate(self.blocks):
+            q, k, v = block.attention.project(block.attn_norm(x), cos, sin)
+            result = cached_attention(block.attention, q, k, v, keys[layer], values[layer],
+                                      indices, allowed, enable_grad)
+            x = block.finish(x, result)
+        return self.output_norm(x)

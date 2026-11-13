@@ -1,6 +1,6 @@
 """Model structure, independent of batch size and observation modality."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, replace
 import math
 
 
@@ -40,3 +40,34 @@ class TransformerConfig:
     @property
     def head_dim(self) -> int:
         return self.hidden_dim // self.num_heads
+
+
+@dataclass(frozen=True)
+class EncoderDecoderConfig(TransformerConfig):
+    """Aligned causal streams with a common width, clock and per-attention window.
+
+    ``num_layers`` is the encoder depth; decoder cross-attention reads the final
+    encoder output at every layer. Projections and task heads belong to callers.
+    """
+    num_layers: int = 4
+    decoder_layers: int = 4
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.decoder_layers) is not int or self.decoder_layers < 1:
+            raise ValueError("decoder_layers must be a positive integer")
+
+    def encoder_config(self) -> TransformerConfig:
+        return TransformerConfig(**{field.name: getattr(self, field.name)
+                                    for field in fields(TransformerConfig)})
+
+    def cache_config(self) -> TransformerConfig:
+        return replace(self.encoder_config(), num_layers=self.num_layers + 2 * self.decoder_layers)
+
+    @property
+    def value_warmup_length(self) -> int:
+        return 1 + self.num_layers * (self.context_length - 1)
+
+    @property
+    def warmup_length(self) -> int:
+        return 1 + (self.num_layers + self.decoder_layers) * (self.context_length - 1)

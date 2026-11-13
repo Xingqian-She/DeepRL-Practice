@@ -27,9 +27,11 @@ def run_training(config, output_dir=None, *, run_dir=None, experiment_id=None):
     started = time.perf_counter()
     device = configure_runtime(config.seed, config.device)
     run = Run("train", asdict(config), device, output_dir, run_dir=run_dir, experiment_id=experiment_id)
-    run.metadata.update(effective_total_timesteps=config.effective_total_timesteps, input_spec=input_spec(),
+    run.metadata.update(effective_total_timesteps=config.effective_total_timesteps,
+                        input_spec=input_spec(xy_fourier=config.agent.xy_fourier),
                         completed_updates=0, last_completed_step=0, sampled_global_step=0,
                         training_budget_completed=False, consistency_warning_count=0,
+                        p1_training_steps=0, p1_entry_global_step=None, p1_entry_learning_rate=None,
                         evaluation_seconds=0.0)
     envs = None
     evaluator = None
@@ -41,7 +43,9 @@ def run_training(config, output_dir=None, *, run_dir=None, experiment_id=None):
         agent.provenance = {key: run.metadata[key] for key in (
             "run_id", "experiment_id", "config_fingerprint", "source_fingerprint", "evaluation_protocol")}
         run.metadata["model"] = {"backbone_mode": config.agent.backbone_mode,
-                                 "parameters": agent.parameter_counts()}
+                                 "parameters": agent.parameter_counts(),
+                                 "policy_warmup_length": config.agent.warmup_length,
+                                 "value_warmup_length": config.agent.value_warmup_length}
         # 在正式环境 reset/采样和 optimizer 更新前完成编译，失败回退不会污染轨迹。
         agent.acceleration = run.metadata["acceleration"]
         try:
@@ -74,6 +78,7 @@ def run_training(config, output_dir=None, *, run_dir=None, experiment_id=None):
             synchronize(device)
             collect_started = time.perf_counter()
             buffer = collector.collect(config.num_steps)
+            run.metadata["model"]["rollout_cache_bytes"] = collector.cache.nbytes
             run.metadata["sampled_global_step"] = collector.global_step
             synchronize(device)
             collect_seconds = time.perf_counter() - collect_started
@@ -91,7 +96,17 @@ def run_training(config, output_dir=None, *, run_dir=None, experiment_id=None):
             synchronize(device)
             ppo_seconds = time.perf_counter() - ppo_started
             metrics.update(collect_seconds=collect_seconds, ppo_seconds=ppo_seconds,
+                           cache_bytes=collector.cache.nbytes,
                            steps_per_second=config.num_envs * config.num_steps / (collect_seconds + ppo_seconds))
+            if config.agent.xy_fourier:
+                metrics.update(buffer.xy_phase_metrics)
+            # PO01 and performance PO03 have a fixed p throughout each rollout.
+            # Count completed training at p=1, separately from merely entering it.
+            if buffer.sensor_probability_start == buffer.sensor_probability_end == 1:
+                if run.metadata["p1_entry_global_step"] is None:
+                    run.metadata["p1_entry_global_step"] = collector.global_step - config.num_envs * config.num_steps
+                    run.metadata["p1_entry_learning_rate"] = metrics["learning_rate"]
+                run.metadata["p1_training_steps"] += config.num_envs * config.num_steps
             collector.invalidate_cache()
             for episode in buffer.episodes:
                 recent.append(episode)
@@ -213,16 +228,18 @@ def make_parser():
                  "curriculum_step", "curriculum_return_threshold", "curriculum_success_rate",
                  "learning_rate_final", "ent_coef_final", "value_clip_coef"):
         parser.add_argument("--" + name.replace("_", "-"), type=float, default=getattr(defaults, name))
-    for name in ("hidden_dim", "num_layers", "num_heads", "context_length"):
+    for name in ("hidden_dim", "num_layers", "decoder_layers", "num_heads", "context_length"):
         parser.add_argument("--" + name.replace("_", "-"), type=int, default=getattr(defaults.agent, name))
     parser.add_argument("--alpha-init", type=float, default=defaults.agent.alpha_init)
     parser.add_argument("--previous-action", dest="use_previous_action", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--xy-fourier", action=argparse.BooleanOptionalAction, default=defaults.agent.xy_fourier)
     parser.add_argument("--normalize-advantage", action=argparse.BooleanOptionalAction,
                         default=defaults.normalize_advantage)
     parser.add_argument("--lr-schedule", choices=("constant", "linear"), default=defaults.lr_schedule)
     parser.add_argument("--ent-coef-schedule", choices=("constant", "linear"), default=defaults.ent_coef_schedule)
-    parser.add_argument("--backbone-mode", choices=("shared", "separate"), default=defaults.agent.backbone_mode,
-                        help="separate 为策略/价值各建一套同宽同深的 Encoder/Transformer")
+    parser.add_argument("--backbone-mode", choices=("shared", "separate", "encoder_decoder"),
+                        default=defaults.agent.backbone_mode,
+                        help="encoder_decoder: num-layers 为 Encoder 深度，decoder-layers 为 Decoder 深度")
     parser.add_argument("--sensor-mode", choices=("curriculum", "full", "partial"), default="curriculum")
     parser.add_argument("--curriculum-start-fraction", type=float, default=0.1)
     parser.add_argument("--curriculum-end-fraction", type=float, default=0.8)
@@ -243,7 +260,8 @@ def main():
     output_dir = args.pop("output_dir")
     run_dir, experiment_id = args.pop("run_dir"), args.pop("experiment_id")
     model_args = {name: args.pop(name) for name in (
-        "hidden_dim", "num_layers", "num_heads", "context_length", "alpha_init", "use_previous_action", "backbone_mode")}
+        "hidden_dim", "num_layers", "decoder_layers", "num_heads", "context_length", "alpha_init",
+        "use_previous_action", "backbone_mode", "xy_fourier")}
     try:
         sensors = SensorConfig(mode=args.pop("sensor_mode"),
                                start_fraction=args.pop("curriculum_start_fraction"),

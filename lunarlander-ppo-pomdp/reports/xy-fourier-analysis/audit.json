@@ -1,0 +1,289 @@
+{
+  "new_batch": "xy-fourier-10m-v1",
+  "historical_batch": "course-10m-v1",
+  "new_tasks": 42,
+  "historical_tasks": 42,
+  "selected_attempts": [
+    1
+  ],
+  "unique_verified_artifacts": 306,
+  "artifact_hash_mismatches": 0,
+  "source_fingerprints": {
+    "historical": "47786bd7215381980b7c74452a38ab74173a1fa3ed34b188166ef49ad271f179",
+    "new": "86cdc5e7e71b5a4cfc65370eb5304a76f96758cee039101c8f8d5c0ab2651fb5"
+  },
+  "current_source_fingerprint": "86cdc5e7e71b5a4cfc65370eb5304a76f96758cee039101c8f8d5c0ab2651fb5",
+  "current_source_matches_new_batch": true,
+  "environment": {
+    "precision": "float32; math SDPA; TF32/AMP disabled",
+    "device": "cuda",
+    "python": "3.11.14",
+    "dependencies": {
+      "torch": "2.9.1",
+      "gymnasium": "1.2.2",
+      "numpy": "2.4.6",
+      "box2d-py": "2.3.5"
+    },
+    "hardware": {
+      "torch": "2.9.1+cu128",
+      "cuda": "12.8",
+      "device_name": "NVIDIA GeForce RTX 4090 Laptop GPU"
+    },
+    "requirements_sha256": "4835811ee15a5c25fc62542a14bec560c7a051b83e8235a163a057844a13c73b",
+    "evaluation_protocol": "batched-policy-v2"
+  },
+  "config_differences": [
+    {
+      "old": "PO01",
+      "new": "XY_PO01",
+      "seed": 42,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "XY_PO03",
+      "seed": 42,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    },
+    {
+      "old": "PO01",
+      "new": "XY_PO01",
+      "seed": 43,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "XY_PO03",
+      "seed": 43,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    },
+    {
+      "old": "PO01",
+      "new": "XY_PO01",
+      "seed": 44,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    },
+    {
+      "old": "PO03",
+      "new": "XY_PO03",
+      "seed": 44,
+      "old_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      },
+      "new_agent": {
+        "hidden_dim": 256,
+        "num_layers": 4,
+        "num_heads": 4,
+        "context_length": 32,
+        "alpha_init": 0.0001,
+        "use_previous_action": true,
+        "backbone_mode": "separate",
+        "decoder_layers": 4
+      }
+    }
+  ],
+  "new_training_steps": 59990016,
+  "comparison_training_rows": 58584,
+  "periodic_evaluations": 588,
+  "heldout_evaluations": 72,
+  "episode_records_recomputed": 18960,
+  "scalar_comparisons_passed": 10044,
+  "new_started_beijing": "2026-11-12T20:50:25.525469+08:00",
+  "new_finished_beijing": "2026-11-13T17:15:12.239558+08:00",
+  "new_training_elapsed_hours": 20.260589591897503,
+  "new_attempt_wall_hours": 20.40974077444444,
+  "new_heldout_evaluation_seconds": 462.64498519102926,
+  "new_diagnostic_probes": 594,
+  "new_consistency_warnings": 0,
+  "new_max_logprob_error": 1.239776611328125e-05,
+  "new_final_task_solved_count": 0,
+  "phase_totals": [
+    {
+      "scope": "heldout",
+      "group": "XY_PO01",
+      "records": 18,
+      "xy_phase_transitions": 308897,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.40981626510620117,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.12040986865758896,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    },
+    {
+      "scope": "heldout",
+      "group": "XY_PO03",
+      "records": 18,
+      "xy_phase_transitions": 395480,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.22893047332763672,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.06228706240653992,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    },
+    {
+      "scope": "periodic",
+      "group": "XY_PO01",
+      "records": 3,
+      "xy_phase_transitions": 570052,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.3106889724731445,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.0818049423396587,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    },
+    {
+      "scope": "periodic",
+      "group": "XY_PO03",
+      "records": 3,
+      "xy_phase_transitions": 686056,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.2379922866821289,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.0871587768197059,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    },
+    {
+      "scope": "training",
+      "group": "XY_PO01",
+      "records": 3,
+      "xy_phase_transitions": 29995008,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.4062809944152832,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.167371854186058,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    },
+    {
+      "scope": "training",
+      "group": "XY_PO03",
+      "records": 3,
+      "xy_phase_transitions": 29995008,
+      "xy_phase_skipped_terminal_transitions": 0,
+      "xy_x_phase_step_max_over_pi": 0.2871251106262207,
+      "xy_x_phase_ge_half_pi_count": 0,
+      "xy_x_phase_ge_pi_count": 0,
+      "xy_y_phase_step_max_over_pi": 0.1112651154398918,
+      "xy_y_phase_ge_half_pi_count": 0,
+      "xy_y_phase_ge_pi_count": 0
+    }
+  ],
+  "final_task_solved_count": 0,
+  "analysis_environment": {
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.6"
+  },
+  "note": "Historical sources differ intentionally. Equal seed labels do not imply matched model initializations. No training, inference, checkpoint loading, or runs writes."
+}

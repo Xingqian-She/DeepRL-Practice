@@ -162,7 +162,7 @@ def save_checkpoint(path, agent, config, global_step, training_state=None):
         "format_version": 2, "environment_id": ENV_ID, "agent_config": asdict(agent.config),
         "train_config": asdict(config), "state_dict": agent.state_dict(),
         "global_step": global_step, "precision": PRECISION,
-        "input_spec": input_spec(),
+        "input_spec": input_spec(xy_fourier=agent.config.xy_fourier),
         "acceleration": getattr(agent, "acceleration", eager_status()),
         "training_state": training_state,
         "provenance": getattr(agent, "provenance", None),
@@ -176,9 +176,10 @@ def load_checkpoint(path, device, use_previous_action=None):
         raise ValueError("旧版 6 维输入 checkpoint 与当前 20 维输入不兼容，请重新训练")
     if saved.get("format_version") != 2 or saved.get("environment_id") != ENV_ID:
         raise ValueError("不是本项目支持的 LunarLander checkpoint")
-    if saved.get("input_spec") != input_spec():
-        raise ValueError("checkpoint 的传感器输入布局与当前项目不一致")
     config = dict(saved["agent_config"])
+    expected_config = AgentConfig(**config)
+    if saved.get("input_spec") != input_spec(xy_fourier=expected_config.xy_fourier):
+        raise ValueError("checkpoint 的传感器输入布局与当前项目不一致")
     if use_previous_action is not None:
         config["use_previous_action"] = use_previous_action
     agent = Agent(AgentConfig(**config)).to(device=device, dtype=torch.float32)

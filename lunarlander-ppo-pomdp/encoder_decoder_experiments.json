@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "default_groups": ["ED_PO01", "ED_PO03"],
+  "seeds": [42, 43, 44],
+  "training": {
+    "agent": {
+      "hidden_dim": 256,
+      "num_layers": 4,
+      "decoder_layers": 4,
+      "num_heads": 4,
+      "context_length": 32,
+      "alpha_init": 0.0001,
+      "use_previous_action": true,
+      "backbone_mode": "encoder_decoder"
+    },
+    "sensors": {"mode": "partial", "start_fraction": 0.1, "end_fraction": 0.8, "schedule": "fixed"},
+    "total_timesteps": 10000000,
+    "num_envs": 8,
+    "num_steps": 256,
+    "sequence_length": 64,
+    "sequences_per_minibatch": 4,
+    "update_epochs": 4,
+    "learning_rate": 0.0003,
+    "lr_schedule": "linear",
+    "learning_rate_final": 0.0,
+    "normalize_advantage": true,
+    "value_clip_coef": 0.0,
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "clip_coef": 0.2,
+    "vf_coef": 0.5,
+    "ent_coef": 0.01,
+    "ent_coef_schedule": "constant",
+    "ent_coef_final": 0.0,
+    "max_grad_norm": 0.5,
+    "consistency_tolerance": 0.0005,
+    "consistency_warning_tolerance": 0.0001,
+    "target_kl": 0.02,
+    "eval_interval": 100,
+    "eval_episodes": 20,
+    "eval_num_envs": 8,
+    "eval_seed": 10000,
+    "eval_policy": "sample",
+    "curriculum_step": 0.1,
+    "curriculum_return_threshold": 200.0,
+    "curriculum_success_rate": 0.8,
+    "curriculum_patience": 2,
+    "max_episode_steps": 1000,
+    "device": "cuda",
+    "compile_mode": "auto",
+    "save_interval": 10,
+    "diagnostic_interval": 50
+  },
+  "evaluation": {
+    "episodes": 100,
+    "seed": 20000,
+    "num_envs": 8,
+    "probabilities": [0, 0.5, 1],
+    "policies": ["sample", "argmax"]
+  },
+  "groups": {
+    "ED_PO01": {"description": "FO04 配方、Encoder–Decoder、直接 p=1", "training": {}},
+    "ED_PO03": {
+      "description": "FO04 配方、Encoder–Decoder、成绩课程",
+      "training": {"sensors": {"mode": "curriculum", "schedule": "performance"}}
+    }
+  }
+}
