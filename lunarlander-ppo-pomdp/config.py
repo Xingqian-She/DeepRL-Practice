@@ -22,6 +22,16 @@ class AgentConfig:
     backbone_mode: str = "shared"
     decoder_layers: int = 4
     xy_fourier: bool = False
+    ffn_dim: int | None = None
+    qk_norm: bool = True
+    final_norm: bool = False
+    rms_eps: float = 1e-6
+    rope_theta: float = 10000.0
+    norm_type: str = "rmsnorm"
+    ffn_type: str = "swiglu"
+    dyt_alpha_init: float = 0.5
+    snake_alpha_init: float = 1.0
+    snake_eps: float = 1e-6
 
     @property
     def input_dim(self):
@@ -33,7 +43,11 @@ class AgentConfig:
         return kind(
             hidden_dim=self.hidden_dim, num_layers=self.num_layers,
             num_heads=self.num_heads, context_length=self.context_length,
-            alpha_init=self.alpha_init, **extra,
+            alpha_init=self.alpha_init, ffn_dim=self.ffn_dim,
+            qk_norm=self.qk_norm, final_norm=self.final_norm, rms_eps=self.rms_eps,
+            rope_theta=self.rope_theta, norm_type=self.norm_type, ffn_type=self.ffn_type,
+            dyt_alpha_init=self.dyt_alpha_init, snake_alpha_init=self.snake_alpha_init,
+            snake_eps=self.snake_eps, **extra,
         )
 
     def __post_init__(self):

@@ -8,10 +8,10 @@ import time
 
 import numpy as np
 import torch
-from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from model import cache_tensors, make_model_input
 from sensors import OBSERVATION_DIM
+from precision import fp32_math
 
 
 def eager_status(requested="off", reason="disabled"):
@@ -63,7 +63,7 @@ def _assert_outputs(actual, expected):
 
 def _warmup(agent, config, device):
     """临时 cache；覆盖 reset、初始/完整预热序列及 grad/no-grad 两种图。"""
-    with sdpa_kernel(SDPBackend.MATH):
+    with fp32_math(device):
         agent.eval()
         features, _, _, _ = _sequence_inputs(config, config.num_envs, 1, device)
         features = features[:, 0].contiguous()

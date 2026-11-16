@@ -6,13 +6,13 @@ import time
 import numpy as np
 import torch
 from torch import nn
-from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from envs import make_env
 from model import make_model_input, policy_features, policy_module_names
 from runtime import EVALUATION_PROTOCOL, preserve_rng_state
 from sensors import OBSERVATION_DIM, SENSOR_NAMES, SensorProcessor, validate_probability
 from xy_fourier import XYPhaseDiagnostics
+from precision import fp32_math
 
 
 class PolicySnapshot(nn.Module):
@@ -32,7 +32,7 @@ class PolicySnapshot(nn.Module):
 
     @torch.no_grad()
     def step(self, features, cache, starts):
-        with sdpa_kernel(SDPBackend.MATH):
+        with fp32_math(features.device):
             hidden, _ = policy_features(self, features, cache=cache, episode_starts=starts)
             return self.actor(hidden[:, 0])
 

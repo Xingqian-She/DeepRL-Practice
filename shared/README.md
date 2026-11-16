@@ -1,6 +1,38 @@
-# rl_shared：RL 时序 Transformer 公共组件
+# rl_shared：RL 时序模型与公共层
 
-这是独立安装的轻量组件包，仅依赖 PyTorch。输入、输出都是 `(Batch, Seq_Len, Hidden_Dim)` 连续特征，提供单堆栈 Transformer 和时序 Encoder–Decoder。原始观测投影、Actor、Critic、RND、损失函数和优化器由调用方管理。
+这是独立安装的轻量组件包，仅依赖 PyTorch。当前提供单堆栈 Transformer 和时序 Encoder–Decoder，输入、输出都是 `(Batch, Seq_Len, Hidden_Dim)` 连续特征。原始观测投影、Actor、Critic、RND、损失函数和优化器由调用方管理。
+
+实现按模型族组织：`rl_shared.models.transformer` 包含 Transformer 配置、注意力、FFN、层、骨干、RoPE 和 KV cache；`rl_shared.layers` 提供独立的激活、变换层和初始化。未来其他模型族可放在 `models` 下的并列子包，其状态无需采用 Transformer 的 KV 结构。现有 `from rl_shared import ...` 和旧模块导入保持兼容；本次没有加入 Mamba 或统一状态框架。
+
+## 可组合的 Transformer 组件
+
+`TransformerConfig` 和 `EncoderDecoderConfig` 都支持以下选项，适用于 Encoder、Decoder、自注意力和交叉注意力：
+
+| 配置 | 默认值 | 含义 |
+|---|---|---|
+| `norm_type` | `rmsnorm` | `rmsnorm` 或 `dyt` |
+| `ffn_type` | `swiglu` | `swiglu` 或 `swi_snake_glu` |
+| `dyt_alpha_init` | `0.5` | 各 DyT 实例独立的可学习标量斜率初值 |
+| `snake_alpha_init` | `1.0` | 每层 `ffn_dim` 个可学习频率的初值 |
+| `snake_eps` | `1e-6` | Snake 分母保护 |
+
+```python
+from rl_shared import EncoderDecoderBackbone, EncoderDecoderConfig
+
+config = EncoderDecoderConfig(hidden_dim=256, context_length=32,
+    norm_type="dyt", ffn_type="swi_snake_glu")
+model = EncoderDecoderBackbone(config)
+# DyT-only: ffn_type="swiglu"
+# Snake-only: norm_type="rmsnorm", ffn_type="swi_snake_glu"
+```
+
+DyT 为 `weight * tanh(alpha * x) + bias`，标量 alpha、通道级 weight/bias 分别初始化为 0.5、1、0。选择 DyT 会替换所有启用的 RMSNorm 位置，包含交叉注意力 query/memory 和 Q/K；Q/K 的参数大小为 `head_dim`，各 head 共用参数。`qk_norm=False` 关闭 Q/K 变换；`final_norm=False` 继续关闭末端变换。无激活统计计算，不保留隐藏的 RMSNorm。原版 RMSNorm 的 Q/K 仍无仿射参数。
+
+Swi-Snake-GLU 保留融合 gate/value 投影和输出投影，仅将 value 路替换为 `v + sin(alpha * v)**2 / (alpha + snake_eps)`，gate 路保留 SiLU。每层学习独立的 `log_alpha[ffn_dim]`，`alpha=exp(log_alpha)`，沿 batch/time 广播。初值不消耗随机数；没有对频率施加额外上下界。epsilon 保护接近零的分母，不保证任意大频率或非有限参数都可计算；训练中的非有限值沿用调用方的检查机制。
+
+原有 `alpha_init` 仍表示残差门控初值，与 DyT 斜率、Snake 频率无关。默认配置的参数名、初始化顺序和计算保持不变，旧权重可严格加载。共享包保留多 dtype 能力；LunarLander 对比入口固定 FP32/math SDPA 并关闭 TF32/AMP。
+
+参考：[DyT 作者实现](https://github.com/jiachenzhu/DyT/blob/main/dynamic_tanh.py)、[Snake 原论文](https://arxiv.org/abs/2006.08195)。
 
 它在 RL 中承担“记忆”的角色：当前观测不足以判断状态时，策略可以通过注意力读取过去的线索。外部 Encoder 先编码观测，骨干整合历史，再由外部 Actor/Critic 输出动作分布和价值。能否学会利用历史，需要学习测试验证；仅检查输出形状和有限梯度还不够。
 

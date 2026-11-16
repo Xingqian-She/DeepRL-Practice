@@ -19,8 +19,11 @@ def read_json(path):
 
 
 def normalized(parameters):
+    from config import AgentConfig
+    from dataclasses import asdict
+
     result = deepcopy(parameters)
-    result["agent"].setdefault("decoder_layers", 4)
+    result["agent"] = asdict(AgentConfig(**result["agent"]))
     result["agent"].pop("xy_fourier", None)
     return result
 

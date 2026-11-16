@@ -25,9 +25,9 @@ from sensors import SensorConfig
 from train import run_training
 
 
-def smoke(output):
+def smoke(output, config_path=None):
     output = Path(output).resolve()
-    recipe = dict(build_plan(PROJECT / "encoder_decoder_experiments.json", ["ED_PO01"])["tasks"][0]["parameters"])
+    recipe = dict(build_plan(config_path or PROJECT / "encoder_decoder_experiments.json")["tasks"][0]["parameters"])
     recipe["agent"] = AgentConfig(**recipe["agent"])
     recipe["sensors"] = SensorConfig(**recipe["sensors"])
     config = replace(TrainConfig(**recipe), total_timesteps=4096, compile_mode="on", save_interval=1,
@@ -56,6 +56,10 @@ def smoke(output):
               "cross_attention": lambda name: ".cross_attention." in name,
               "actor": lambda name: name.startswith("actor."),
               "critic": lambda name: name.startswith("critic.")}
+    if config.agent.norm_type == "dyt":
+        groups["dyt_slopes"] = lambda name: name.endswith("_norm.alpha")
+    if config.agent.ffn_type == "swi_snake_glu":
+        groups["snake_frequencies"] = lambda name: name.endswith("value_activation.log_alpha")
     changed = {group: any(not torch.equal(initial[name], value) for name, value in agent.state_dict().items()
                           if predicate(name)) for group, predicate in groups.items()}
     assert all(changed.values()), changed
@@ -83,4 +87,6 @@ def smoke(output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", required=True, type=Path)
-    smoke(parser.parse_args().output_dir)
+    parser.add_argument("--config", type=Path, help="Optional experiment recipe; uses its first default group")
+    args = parser.parse_args()
+    smoke(args.output_dir, args.config)

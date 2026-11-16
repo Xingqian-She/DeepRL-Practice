@@ -8,13 +8,13 @@ import torch
 from torch import nn
 from torch.distributions import Categorical
 from torch.nn import functional as F
-from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from rl_shared import EncoderDecoderBackbone, KVCache, TransformerBackbone, init_head
 
 from config import AgentConfig
 from sensors import OBSERVATION_DIM
 from xy_fourier import append_xy_fourier
+from precision import fp32_math
 
 
 @dataclass
@@ -184,7 +184,7 @@ class Agent(nn.Module):
         else:
             projection = self.encoder
             backbone = self.backbone.encoder if self.config.backbone_mode == "encoder_decoder" else self.backbone
-        with sdpa_kernel(SDPBackend.MATH):
+        with fp32_math(features.device):
             hidden = backbone(projection(features), episode_starts=episode_starts,
                               valid_mask=valid_mask, position_ids=position_ids)
             return self.critic(hidden).squeeze(-1)
@@ -194,7 +194,7 @@ class Agent(nn.Module):
         """交互：每个环境只推进一个 token；返回 (N,4)、(N,)。"""
         features = make_model_input(observations, previous_actions, self.config.use_previous_action,
                                     xy_fourier=self.config.xy_fourier)
-        with sdpa_kernel(SDPBackend.MATH):
+        with fp32_math(features.device):
             core = self._compiled_step or self._step_core
             return core(features, cache, episode_starts)
 
@@ -202,7 +202,7 @@ class Agent(nn.Module):
         """并行参考/后继估值路径，保持 eager，避免为变化的估值批次反复编译。"""
         features = make_model_input(observations, previous_actions, self.config.use_previous_action,
                                     xy_fourier=self.config.xy_fourier)
-        with sdpa_kernel(SDPBackend.MATH):
+        with fp32_math(features.device):
             return self._sequence_core(features, episode_starts, valid_mask, position_ids)
 
     def evaluate_actions(self, batch):
@@ -210,7 +210,7 @@ class Agent(nn.Module):
             batch["observations"], batch["previous_actions"], self.config.use_previous_action,
             xy_fourier=self.config.xy_fourier,
         )
-        with sdpa_kernel(SDPBackend.MATH):
+        with fp32_math(features.device):
             core = self._compiled_sequence or self._sequence_core
             logits, values = core(features, batch["episode_starts"], batch["valid_mask"], batch["position_ids"])
         distribution = Categorical(logits=logits)
