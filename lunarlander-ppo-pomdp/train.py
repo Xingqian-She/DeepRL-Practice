@@ -39,7 +39,7 @@ def run_training(config, output_dir=None, *, run_dir=None, experiment_id=None):
     try:
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(device)
-        agent = Agent(config.agent).to(device)
+        agent = Agent(config.agent).to(device=device, dtype=torch.float32)
         agent.provenance = {key: run.metadata[key] for key in (
             "run_id", "experiment_id", "config_fingerprint", "source_fingerprint", "evaluation_protocol")}
         run.metadata["model"] = {"backbone_mode": config.agent.backbone_mode,
@@ -231,6 +231,14 @@ def make_parser():
     for name in ("hidden_dim", "num_layers", "decoder_layers", "num_heads", "context_length"):
         parser.add_argument("--" + name.replace("_", "-"), type=int, default=getattr(defaults.agent, name))
     parser.add_argument("--alpha-init", type=float, default=defaults.agent.alpha_init)
+    parser.add_argument("--ffn-dim", type=int, default=defaults.agent.ffn_dim)
+    for name in ("rms_eps", "rope_theta", "dyt_alpha_init", "snake_alpha_init", "snake_eps"):
+        parser.add_argument("--" + name.replace("_", "-"), type=float, default=getattr(defaults.agent, name))
+    for name in ("qk_norm", "final_norm"):
+        parser.add_argument("--" + name.replace("_", "-"), action=argparse.BooleanOptionalAction,
+                            default=getattr(defaults.agent, name))
+    parser.add_argument("--norm-type", choices=("rmsnorm", "dyt"), default=defaults.agent.norm_type)
+    parser.add_argument("--ffn-type", choices=("swiglu", "swi_snake_glu"), default=defaults.agent.ffn_type)
     parser.add_argument("--previous-action", dest="use_previous_action", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--xy-fourier", action=argparse.BooleanOptionalAction, default=defaults.agent.xy_fourier)
     parser.add_argument("--normalize-advantage", action=argparse.BooleanOptionalAction,
@@ -261,7 +269,8 @@ def main():
     run_dir, experiment_id = args.pop("run_dir"), args.pop("experiment_id")
     model_args = {name: args.pop(name) for name in (
         "hidden_dim", "num_layers", "decoder_layers", "num_heads", "context_length", "alpha_init",
-        "use_previous_action", "backbone_mode", "xy_fourier")}
+        "use_previous_action", "backbone_mode", "xy_fourier", "ffn_dim", "qk_norm", "final_norm",
+        "rms_eps", "rope_theta", "norm_type", "ffn_type", "dyt_alpha_init", "snake_alpha_init", "snake_eps")}
     try:
         sensors = SensorConfig(mode=args.pop("sensor_mode"),
                                start_fraction=args.pop("curriculum_start_fraction"),

@@ -516,7 +516,14 @@ def report(root, state):
             from xy_fourier_comparison import write_comparison
             write_comparison(root, state)
             lines += ["", "历史 PO01/PO03 参考与源码差异见 [xy-comparison.md](xy-comparison.md)。"]
-    if state["contract"]["training_defaults"]["agent"]["backbone_mode"] == "encoder_decoder":
+    from dyt_snake_comparison import GROUP_PAIRS
+    if any(group in GROUP_PAIRS for group in conditions):
+        lines += ["", "**DyT + Swi-Snake-GLU Encoder–Decoder：FP32/math SDPA，TF32/AMP 关闭。**"]
+        if not state["contract"]["smoke"]:
+            from dyt_snake_comparison import write_comparison
+            write_comparison(root, state)
+            lines += ["", "历史 ED_PO01/ED_PO03 比较见 [dyt-snake-comparison.md](dyt-snake-comparison.md)。"]
+    elif state["contract"]["training_defaults"]["agent"]["backbone_mode"] == "encoder_decoder":
         lines += ["", "**Encoder–Decoder 探索实验：以最终统一条件评估为主要依据；"
                   "容量、感受野和共享梯度均有变化，结果不能单独归因于交叉注意力。**",
                   "", "PO03 的最终难度预算、进入时学习率和课程轨迹见 [curriculum.csv](curriculum.csv)。",

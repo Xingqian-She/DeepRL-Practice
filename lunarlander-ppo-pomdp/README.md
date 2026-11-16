@@ -1,5 +1,34 @@
 # LunarLander PPO-POMDP
 
+## DyT + Snake Encoder–Decoder
+
+新增独立配方 [dyt_snake_experiments.json](dyt_snake_experiments.json) 与 [一键入口](run_dyt_snake.ps1)。默认组 `DYT_SNAKE_ED_PO01` 为直接 p=1，`DYT_SNAKE_ED_PO03` 为成绩课程；各运行种子 42/43/44、1000 万环境步，最终 latest.pt 在 p=0/0.5/1 × sample/argmax 下各评估 100 回合。完整批次为 6 次训练 + 36 次最终评估。
+
+从仓库根目录运行：
+
+```powershell
+# 正式预览：不训练、不评估
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_dyt_snake.ps1 -DryRun
+# 独立小模型烟测，不用于收敛结论
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_dyt_snake.ps1 -Smoke -Device cuda
+# 正式两组、三个种子；会执行完整长训练
+powershell -NoProfile -ExecutionPolicy Bypass -File .\lunarlander-ppo-pomdp\run_dyt_snake.ps1
+```
+
+正式默认批次 `encoder-decoder-dyt-snake-10m-v1`，烟测默认 `encoder-decoder-dyt-snake-smoke-v1`。支持 `-Groups`、`-Batch`、`-Status`、`-AnalyzeOnly` 和 `-Device`；与原有入口共用中断处理及按 attempt 补跑规则。更改源码或配方后使用新的批次名。
+
+`norm_type="dyt"` 将所有启用的 RMSNorm 位置替换为 DyT，包括自注意力/交叉注意力 Q/K、交叉 query/memory；每处都有独立标量斜率和通道仿射参数。`ffn_type="swi_snake_glu"` 仅在 SwiGLU 的 value 路加入 Snake，每层学习 channel-wise `log_alpha[ffn_dim]`。DyT 初始斜率 0.5，Snake 初始频率 1、分母保护 1e-6；残差门控仍为 1e-4。正式实验不加入 XY Fourier。
+
+组件可独立切换。DyT-only 使用 `norm_type="dyt", ffn_type="swiglu"`；原版使用 `rmsnorm/swiglu`。JSON 和 train.py 同时支持 `ffn_dim`、`qk_norm`、`final_norm`、`rms_eps`、`rope_theta` 以及新组件参数；CLI 使用对应的连字符名称，如 `--norm-type dyt --ffn-type swiglu --no-qk-norm`。旧配置省略新字段时仍采用原版行为。
+
+训练、缓存、历史重放、PPO 和评估均为 FP32/math SDPA，TF32/AMP 关闭；项目计算入口也会关闭外层 autocast。shared 保留通用 dtype 能力。
+
+正式运行的 `summary/dyt-snake-comparison.md` 和 JSON 自动读取 `encoder-decoder-10m-v1` 的 ED_PO01/ED_PO03 登记产物，核验各自来源、哈希、训练配方、checkpoint 依赖与评估协议，给出逐种子差值、跨种子均分/样本 SD、≥200 比例、耗时、参数量和课程预算。历史缺失或不匹配时报告原因，不中断新实验；旧产物保持只读。此比较对应 [ED 报告](reports/ED_PO01-ED_PO03-encoder-decoder-analysis.md)，属于历史探索性比较，不能分离 DyT 和 Snake 的贡献，也不构成同期消融。
+
+**正式 DyT + Snake 批次已完成，6 次训练和 36 次最终评估均结束。** 直接组 `p=1/sample` 均分为 −20.52（历史 ED 为 139.29）；成绩课程三个种子分别停在 p=0.9/0.9/0.8，均未进入 p=1 训练。数据核验、六张分析图、课程瓶颈、失败回合及后续组件消融建议见 [DyT + Snake 实验报告](reports/DYT_SNAKE_ED_PO01-DYT_SNAKE_ED_PO03-analysis.md)。
+
+原有实验说明如下。
+
 用 PPO + GAE 和时序 Transformer，研究策略如何适应传感器独立失灵。支持共享、独立和因果 Encoder–Decoder 策略价值骨干，学习率衰减、优势标准化、价值裁剪和熵系数调度均可对照。周期评估使用策略专用副本与批量推理，默认 8 个环境、20 回合。
 
 **第一阶段 FO01–FO07 已完成，按既定规则选择 FO04。** 该配置采用独立 Actor/Critic 骨干与线性学习率；各组成绩、训练稳定性和传感器缺失泛化结果见[第一阶段报告](reports/FO01-FO07-stage1-analysis.md)。

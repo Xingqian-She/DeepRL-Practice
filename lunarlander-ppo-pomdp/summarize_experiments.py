@@ -45,6 +45,10 @@ def training_arguments(parameters):
             arguments.append("--normalize-advantage" if value else "--no-normalize-advantage")
         elif key == "xy_fourier":
             arguments.append("--xy-fourier" if value else "--no-xy-fourier")
+        elif key in ("qk_norm", "final_norm"):
+            arguments.append("--" + ("" if value else "no-") + key.replace("_", "-"))
+        elif value is None:
+            continue
         else:
             arguments.extend(["--compile" if key == "compile_mode" else "--" + key.replace("_", "-"), str(value)])
     return arguments
